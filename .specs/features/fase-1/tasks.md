@@ -75,6 +75,16 @@ Where: deploy
 Depends on: T6
 Tests: build e smoke
 Gate: Build
-- [ ] Imagem Chromium, variáveis, CI, documentação e Docker recuperado; NFLX-07.
+- [x] Imagem Chromium, variáveis, CI, documentação e Docker recuperado; NFLX-07. Docker Desktop atualizado de 4.68.0 para 4.95.0 pelo instalador oficial assinado; Engine 29.8.2 e hello-world aprovados. Build Go/web e stack Compose aprovados, API healthz/readyz HTTP 200. Screenshot Chromium executado dentro do worker como pwuser. Sessões reais funcionaram também no worker Docker. Sem credencial TMDB do usuário: testes HTTP/PostgreSQL aprovados; chamada real permanece pendente.
+
+### Revisão de adequação da entrega
+
+| Critério | Evidência e resultado exigido | Resultado |
+| --- | --- | --- |
+| AC 3–4 | worker/netflix/normalize_test.go:69 compara SourceTitle, SourceTitleID, SourceKey, MatchTitle e instante exatos; teste de null continua exigindo ErrParserChanged/lote nil | Aprovado; título em branco alterado por decisão expressa do usuário |
+| AC 5–6 | worker/netflix/browser_integration_test.go:107 exige dois IDs distintos e estado; :122 exige erro categorizado e lote nil em perfil, parser, limite e total incompleto | Aprovado; Chromium com SSR/Falcor sintético |
+| AC 13 | .github/workflows/checks.yml executa stack/readyz e screenshot Chromium como usuário da imagem; deploy/Dockerfile.backend fixa versão compatível | Smoke local passou com exit 0 e HTTP 200 |
+
+Os testes novos verificam AC 3–6 e os comandos de smoke verificam AC 13; nenhum teste foi removido ou ignorado. A normalização de título em branco mudou após confirmação do usuário, preservando teste de campo ausente e acrescentando teste de null. Verificação independente é o próximo gate.
 
 Dependências do diagrama coincidem com cada Depends on. Todos os componentes possuem testes na mesma tarefa. Usuário autorizou implementação, testes e PR; decisões simples seguem os padrões documentados, sem nova aprovação de ferramentas.

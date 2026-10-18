@@ -1,0 +1,5 @@
+# Acesso local opcional para CLI com navegador visível. Não usar em produção.
+services:
+  postgres:
+    ports:
+      - '127.0.0.1:55433:5432'

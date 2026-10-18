@@ -2,7 +2,7 @@
 
 Registro pessoal do que duas pessoas assistem, com notas individuais e favoritos do ano. A coleta será própria, começando pela Netflix. O TMDB será usado somente para metadados. Nome provisório.
 
-**Estado atual: Fase 0 implementada.** API de saúde/prontidão, worker de base, schema PostgreSQL, frontend inicial, Compose e CI. Ainda não há coleta, login, notas via app nem PWA instalável.
+**Estado atual: Fase 1 em validação.** Coletor Netflix, sessão cifrada por perfil, normalização, sync manual/diário, idempotência e enriquecimento TMDB implementados. O app de notas e a autenticação web continuam na Fase 2. Consulte o [guia de operação Netflix](docs/netflix.md) para conectar os perfis e verificar o sync real.
 
 ## Estrutura
 
@@ -13,8 +13,12 @@ api/
   internal/httpapi/        Rotas e testes HTTP
   migrations/              SQL goose e testes de integração
 worker/
-  cmd/worker/              Processo separado; coleta ainda desabilitada
+  cmd/worker/              CLI administrativa e worker diário
   collector/               Contratos de coleta e extração assistida
+  netflix/                 Captura Playwright, perfil e normalização
+  store/                   Transações, locks e pendências de metadados
+  tmdb/                    Correspondência conservadora e metadados
+  syncer/                  Orquestração e agenda diária
 internal/config/           Configuração compartilhada dos processos Go
 web/                       React + Vite + TypeScript, base mobile-first
 deploy/
@@ -34,17 +38,17 @@ go.mod / go.sum            Um módulo compartilhado por API e worker
 
 - Go 1.26, chi, pgx v5 e goose. Dependências Go em go.sum e dependências web fixadas em package-lock.json.
 - PostgreSQL 17. Todas as identidades de domínio usam UUID; IDs do TMDB são externos e separados.
-- Um processo de API e um de worker. Na Fase 1, o worker terá agenda diária com cron interno e exclusão de execução concorrente em PostgreSQL. River fica para quando houver necessidade comprovada de fila.
-- O coletor Netflix será implementado em Go com playwright-go na Fase 1. A imagem do worker receberá os navegadores nessa etapa; a imagem atual não contém Playwright.
+- Um processo de API e um de worker, com sync na inicialização e cron diário às 04:00 em America/Sao_Paulo. Advisory lock PostgreSQL evita sync concorrente na mesma conexão. River fica para quando houver necessidade de fila.
+- Coletor Go com playwright-go e Chromium. A imagem worker usa a base oficial Playwright 1.62.1; versão do driver alinhada ao módulo Go. API/migrations continuam em imagem Alpine menor.
 - Uma `streaming_account` representa serviço, referência da conta, perfil e pessoa responsável. Cada perfil fica atribuído a uma pessoa. Sincronizações sempre registram essa pessoa explicitamente.
-- Uma conexão nova começa em `needs_login`. Há estados `active`, `needs_login`, `error` e `disabled`, com último sucesso, última tentativa e código de erro. Uma sessão expirada será marcada pelo coletor na Fase 1.
-- Sessões futuras serão envelopes AES-256-GCM versionados, com nonce aleatório e chave de 32 bytes fora do banco. O schema aceita somente ciphertext e versão da chave em conjunto. A criptografia ainda será implementada; não grave cookies nesta base.
-- Eventos usam `UNIQUE (streaming_account_id, source_event_key)`. A chave deve ser um identificador estável da origem; quando não houver ID, a regra de fingerprint será definida a partir do histórico real, sem índice de página. O `INSERT ... ON CONFLICT DO NOTHING` é exercitado em banco real. Reassistir com uma nova chave é um novo evento. Alterar o dono de uma conexão com eventos é impedido pela chave estrangeira; uma transferência exige fluxo próprio.
+- Uma conexão nova começa em `needs_login`. Há estados `active`, `needs_login`, `error` e `disabled`, com último sucesso, última tentativa e código de erro. O coletor marca sessões expiradas como needs_login.
+- Sessões são envelopes AES-256-GCM versão 1, com nonce aleatório e chave de 32 bytes em base64 fora do banco. O UUID da conexão é autenticado no envelope. Login local não grava storage state em arquivo aberto. Não altere a chave sem recifrar as sessões.
+- Eventos usam `UNIQUE (streaming_account_id, source_event_key)`. Na Netflix a chave é `netflix:movieID:epoch_ms`, sem índice de página ou título traduzido. O upsert idempotente é exercitado em banco real. Reassistir com uma nova chave é um novo evento. Alterar o dono de uma conexão com eventos é impedido pela chave estrangeira; uma transferência exige fluxo próprio.
 - `watch_events.source_title` e `source_title_id` preservam a identidade original. `title_id` e `episode_id` ficam nulos até o enriquecimento. Falhar no TMDB não deverá perder o histórico coletado.
 - `watched_on` preserva o dia informado pelo serviço. `watched_at` é opcional e só será preenchido se a fonte informar um instante real. Não inventamos meia-noite. Instantes usam `timestamptz`; a agenda e a apresentação usarão `America/Sao_Paulo` inicialmente.
 - Notas de 0 a 10 em passos de 0,5; uma por pessoa e título, inclusive para séries. A aplicação atualizará `updated_at` ao editar. Média do casal será calculada, sem persistência duplicada.
 - Episódios pertencem somente a séries e devem coincidir com o título do evento. Temporada 0 permite especiais. Nenhuma duração assistida é inferida por enquanto; duração de catálogo poderá servir a estatísticas estimadas, identificadas como tal.
-- Sem usuários ou senhas padrão. Cadastro das duas pessoas, hash de senha e sessão HTTP serão implementados na Fase 2, antes de expor dados pessoais. Nenhum endpoint de dados existe nesta fase.
+- Sem senhas padrão. A CLI cria identidades locais com password_hash desabilitado; não há acesso web para elas. Auth HTTP e atribuição de senhas serão implementadas na Fase 2. Nenhum endpoint público de histórico existe nesta fase.
 - VPS assumida como Linux com Docker Compose v2. Specs, domínio, estratégia de backup e outros streamings serão preenchidos quando forem informados.
 
 ## Executar com Docker
@@ -59,7 +63,7 @@ Copy-Item .env.example .env
 
 Em Linux/macOS: `cp .env.example .env`.
 
-Preencha `POSTGRES_PASSWORD` no `.env` com uma senha aleatória de caracteres seguros para URL. Pode gerar com `openssl rand -hex 32`. No PowerShell 7, use `[Convert]::ToHexString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()`. Usuário e nome do banco também devem usar caracteres seguros para URL. TMDB e chave de sessão ficam vazios nesta fase.
+Preencha `POSTGRES_PASSWORD` no `.env` com uma senha aleatória de caracteres seguros para URL. Pode gerar com `openssl rand -hex 32`. No PowerShell 7, use `[Convert]::ToHexString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()`. Usuário e nome do banco também devem usar caracteres seguros para URL. Preencha `SESSION_ENCRYPTION_KEY` com 32 bytes em base64 (`openssl rand -base64 32`); ela é obrigatória no worker. TMDB é opcional para a coleta, mas necessário para enriquecer os eventos.
 
 ```sh
 docker compose --env-file .env -f deploy/compose.yaml up --build -d --wait
@@ -101,7 +105,7 @@ npm ci
 npm run dev
 ```
 
-O Vite informa sua URL local e encaminha `/api` para `127.0.0.1:8080`. Para executar o worker, exporte `DATABASE_URL` nesse terminal e rode `go run ./worker/cmd/worker`. Ele aguarda encerramento e informa que a coleta ainda não foi implementada.
+O Vite informa sua URL local e encaminha `/api` para `127.0.0.1:8080`. O worker exige DATABASE_URL e SESSION_ENCRYPTION_KEY. Seu comando padrão executa sync inicial e diário; o [guia Netflix](docs/netflix.md) documenta bootstrap, login, status e sync manual.
 
 ## Migrations
 
@@ -148,9 +152,9 @@ TEST_DATABASE_URL='postgres://test:test-local-only@127.0.0.1:55432/watched_test?
 docker compose -f deploy/compose.test.yaml down -v
 ```
 
-A tag `integration` exige `TEST_DATABASE_URL`; sua ausência falha explicitamente. Os testes criam e removem um schema aleatório, exercitam up/down/up, reaplicação sem mudanças, replay de eventos, revisitas, notas e chaves estrangeiras. Use sempre um banco de teste, pois o usuário precisa de permissão para criar/remover schemas. Testes de normalização do payload Netflix serão adicionados junto com o normalizador na Fase 1, usando fixtures sanitizadas.
+A tag `integration` exige `TEST_DATABASE_URL`; sua ausência falha explicitamente. Os testes criam e removem schemas aleatórios e cobrem migrations, replay, revisitas, locks, rollback, notas, vínculos e retry de metadados. A normalização usa fixture sintética identificada, sem histórico pessoal. Para rodar todos os testes, instale Chromium/driver com `go run github.com/mxschmitt/playwright-go/cmd/playwright@v0.6201.1 install --only-shell chromium` e execute `go test -tags=integration -count=1 ./...`; em Linux acrescente `--with-deps` à instalação. Os testes de browser usam um site local controlado e não substituem validação Netflix ao vivo.
 
-O GitHub Actions executa testes Go com race detector, integração PostgreSQL, build web e smoke test da stack Docker. Os três jobs passaram na [validação inicial da Fase 0](https://github.com/Ronald-Lacerda/my-watched-list/actions/runs/39166847423). A revisão independente confirmou 16 critérios e detectou 10 falhas injetadas em cópia isolada; consulte `.specs/features/fase-0/validation.md`. O Docker Desktop local não iniciou por erro no socket dockerInference, portanto os containers foram validados no runner Linux da CI; localmente usamos PostgreSQL e Caddy temporários nativos.
+O GitHub Actions executa testes Go com race detector, integração PostgreSQL, build web e smoke test da stack Docker. Os três jobs passaram na [validação inicial da Fase 0](https://github.com/Ronald-Lacerda/my-watched-list/actions/runs/39166847423). A revisão independente confirmou 16 critérios e detectou 10 falhas injetadas em cópia isolada; consulte `.specs/features/fase-0/validation.md`. Na Fase 1, o Docker Desktop local foi recuperado pela atualização de 4.68.0 para 4.95.0, usando o instalador oficial assinado. Engine 29.8.2, hello-world, build da stack, healthz/readyz e Chromium dentro do worker foram validados localmente. O volume da aplicação e os demais containers existentes foram preservados.
 
 ## VPS e HTTPS
 
@@ -176,15 +180,15 @@ O override substitui a porta local por 80/TCP e 443/TCP/UDP. O banco e a API con
 
 | Fase | Entrega | Estado |
 | --- | --- | --- |
-| 0 | Monorepo, processos, Compose, schema e README | Implementada; revisar estrutura antes de avançar |
-| 1 | Netflix: sessão criptografada, API interna de histórico via Playwright, paginação, normalização, cron, idempotência e TMDB | Próxima |
+| 0 | Monorepo, processos, Compose, schema e README | Estrutura aprovada |
+| 1 | Netflix: sessão criptografada, API interna de histórico via Playwright, paginação, normalização, cron, idempotência e TMDB | Implementada; em validação |
 | 2 | Auth para duas pessoas, timeline com filtros, notas, média do casal, pendentes e PWA | Planejada |
 | 3 | Melhores do ano, rankings individuais/do casal e estatísticas | Planejada |
 | 4 | Outros streamings e fallback assistido por LLM | Planejada |
 
-Na Fase 1, inspecionar o tráfego real de `/viewingactivity` em sessão autorizada antes de fixar endpoints ou formatos internos. Sessão expirada marcará `needs_login`; mudança de parser registrará erro sem marcar sync bem-sucedido. A interface `AssistedExtractor` fica preparada para injeção futura, com página sanitizada e saída validada no mesmo schema dos eventos. Não há dependência de Trakt, Simkl nem de serviço de terceiros para coleta.
+O tráfego real de `/viewingactivity` foi inspecionado em sessão autorizada: vaModel inicial e Falcor na paginação, com identidade e total conferidos. Foram salvos 557 eventos de R e 691 de Gabriela, sem aumento ao repetir o sync. Sessão expirada marca `needs_login`; mudança de parser registra erro sem marcar sync bem-sucedido. O token TMDB ainda não foi configurado; eventos ficam pendentes de metadados, e os testes usam HTTP controlado. A interface `AssistedExtractor` fica preparada para injeção futura, com página sanitizada e saída validada no mesmo schema dos eventos. Não há dependência de Trakt, Simkl nem de serviço de terceiros para coleta.
 
-Dados a informar antes do deploy/coletor: SO e recursos da VPS, instalação atual do Docker/proxy, domínio, outros streamings e perfis que cada pessoa usa. Nenhum deles impede a revisão da Fase 0.
+Dados a informar antes do deploy na VPS: SO e recursos da VPS, instalação atual do Docker/proxy, domínio, outros streamings e perfis que cada pessoa usa. A coleta local funciona sem esses dados.
 
 ## Referências técnicas
 
@@ -194,4 +198,4 @@ Dados a informar antes do deploy/coletor: SO e recursos da VPS, instalação atu
 - [Caddy para SPA com API](https://caddyserver.com/docs/caddyfile/patterns)
 - [Imagem oficial PostgreSQL](https://hub.docker.com/_/postgres)
 
-Commits pequenos em Conventional Commits, com descrições em português. Um PR por fase ou funcionalidade. A branch inicial é `feat/fase-0`. O usuário solicitou a criação de um repositório novo; adotamos [my-watched-list](https://github.com/Ronald-Lacerda/my-watched-list), privado na conta GitHub autenticada. A estrutura da Fase 0 está no [PR #1](https://github.com/Ronald-Lacerda/my-watched-list/pull/1), para revisão antes de iniciar a coleta Netflix.
+Commits pequenos em Conventional Commits, com descrições em português. Um PR por fase ou funcionalidade. A branch inicial é `feat/fase-0`. O usuário solicitou a criação de um repositório novo; adotamos [my-watched-list](https://github.com/Ronald-Lacerda/my-watched-list), privado na conta GitHub autenticada. A estrutura da Fase 0 está no [PR #1](https://github.com/Ronald-Lacerda/my-watched-list/pull/1), com a estrutura aprovada. A Fase 1 usa PR separado baseado em feat/fase-0 enquanto o PR #1 estiver aberto.
