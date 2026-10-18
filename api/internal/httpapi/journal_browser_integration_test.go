@@ -105,6 +105,7 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 	}
 	click(t, p, "Cancelar")
 	click(t, p, "Sair da conta")
+	visible(t, p.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Bem-vindo de volta."}))
 	loginBrowser(t, b, 1)
 	records(t, p, 6)
 	openRating(t, p, b.ids[1])

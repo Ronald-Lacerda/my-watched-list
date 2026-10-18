@@ -24,7 +24,7 @@ Build: Quick + Full + `go build ./...`, `npm --prefix web run build`, gofmt e Co
 Oito entregas coesas, implementadas em sequência local. O usuário já autorizou a implementação e as decisões simples; ferramentas normais do projeto são mantidas. Verifier independente obrigatório após o último commit.
 
 ```text
-T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10
+T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11
 ```
 
 ## Task Breakdown
@@ -98,6 +98,13 @@ Depends on: T9
 Tests: integration browser
 Gate: Full
 - [x] AC21: o browser agora exige três cartões, serviço e perfil identificáveis, pessoa correta, estado e último sync em São Paulo (18/10/2026, 09:00) nas três conexões sintéticas, além da orientação needs_login existente. TestBrowserJournalAndIndividualRatings confere a conjunção em :139–157; a revisão anterior demonstrou mutante que substituía o perfil passando pelo teste. Full/Quick/vet/build aprovados; nenhum código de produção mudou nesta correção. Revalidação independente PASS: mutantes de perfil, pessoa, serviço e horário/fuso detectados.
+
+### T11: aguardar a conclusão da saída antes de navegar no E2E
+Where: api/internal/httpapi
+Depends on: T10
+Tests: integration browser
+Gate: Full
+- [x] AC18/20: TestBrowserJournalAndIndividualRatings agora espera o heading de login após clicar Sair e antes de loginBrowser navegar. O CI pull_request de 845b472 falhou na espera do heading após navegação prematura; o job push do mesmo código passou. A nova espera mantém todas as asserções e impede cancelar a requisição de logout em andamento. Fluxo Chromium aprovado em cinco repetições consecutivas; Full/Quick/vet/build aprovados. Nenhum código de produção ou timeout foi alterado. CI do novo commit é obrigatório antes de tirar o PR do rascunho.
 
 ## Conferência estrutural
 
