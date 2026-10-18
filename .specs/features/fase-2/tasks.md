@@ -83,7 +83,7 @@ Where: deploy
 Depends on: T7
 Tests: integration browser e smoke
 Gate: Build
-- [ ] Manifest/SW/ícones, offline sem dados privados, CI, Compose e guia de primeiro acesso; gerar convites locais e PR separado. APP-08.
+- [x] Manifest/SW/ícones, offline sem dados privados, CI, Compose e guia de primeiro acesso. APP-08. Build web e Full/Quick/vet/build Go passaram. TestBrowserPWAOfflinePrivacy exige manifest standalone, ícones 192/512, cache exclusivo do shell, ausência de notas gravadas offline, shell após reload sem histórico privado e recuperação online. O teste revelou redirecionamento de index.html no servidor de teste e sinal onLine impreciso após reload: fallback público normaliza a resposta e falha real de rede também atualiza o aviso. Compose build/up e configurações local/HTTPS passaram; readyz=200, histórico sem sessão=401 e Chromium no worker renderizou o app. Backup PostgreSQL local de 116976 bytes validado por pg_restore; migration/startup preservaram R=557 e Gabriela=691 eventos únicos, todos com source_work_id preenchido. Convites individuais locais gerados e primeiro acesso de R aberto sem senha padrão ou token no chat. docs/app.md descreve uso, operação e rollback protegido. PR separado será aberto após este commit e só ficará pronto após revisão independente e CI.
 
 ## Conferência estrutural
 

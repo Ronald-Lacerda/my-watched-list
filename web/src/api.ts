@@ -14,6 +14,7 @@ export class ApiError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message) }
 }
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  if (!navigator.onLine) throw new ApiError(0, 'offline', 'Sem conexão. Reconecte para consultar o histórico ou salvar sua nota.')
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
   if (options.body !== undefined) headers.set('Content-Type', 'application/json')
@@ -21,8 +22,10 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   try { response = await fetch(`/api${path}`, { ...options, headers, credentials: 'same-origin', cache: 'no-store' }) }
   catch (error) {
     if (options.signal?.aborted) throw error
+    window.dispatchEvent(new Event('network-unavailable'))
     throw new ApiError(0, 'network', 'Não foi possível conectar. Confira sua conexão e tente novamente.')
   }
+  window.dispatchEvent(new Event('network-available'))
   if (!response.ok) {
     const data = await response.json().catch(() => null) as { error?: { code?: string; message?: string } } | null
     if (response.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new Event('session-expired'))
