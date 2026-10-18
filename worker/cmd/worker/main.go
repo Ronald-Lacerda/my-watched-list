@@ -30,7 +30,21 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+type browserClient interface {
+	syncer.Fetcher
+	LoginWithState(context.Context, string, []byte, func() error) (netflix.Profile, []byte, error)
+}
+
 func run(ctx context.Context, args []string, input io.Reader, output io.Writer) error {
+	return runWithBrowser(ctx, args, input, output, func(zone *time.Location, channel string) browserClient {
+		return netflix.Browser{Zone: zone, LoginChannel: channel}
+	})
+}
+
+// O navegador é a fronteira externa substituída nos testes da CLI; banco,
+// criptografia, comandos e orquestração continuam sendo os componentes reais.
+func runWithBrowser(ctx context.Context, args []string, input io.Reader, output io.Writer, newBrowser func(*time.Location, string) browserClient) error {
 	command := "serve"
 	if len(args) > 0 {
 		command = args[0]
@@ -111,7 +125,7 @@ func run(ctx context.Context, args []string, input io.Reader, output io.Writer) 
 		if *uid == "" || *profile == "" {
 			return errors.New("login exige --user-id e --profile")
 		}
-		b := netflix.Browser{Zone: zone, LoginChannel: *channel}
+		b := newBrowser(zone, *channel)
 		var initial []byte
 		if *reuse != "" {
 			list, e := s.Accounts(ctx, true)
@@ -145,7 +159,7 @@ func run(ctx context.Context, args []string, input io.Reader, output io.Writer) 
 		fmt.Fprintln(output, "Conexão salva:", connection)
 		return nil
 	}
-	r := syncer.Runner{Store: s, Cipher: cipher, Fetcher: netflix.Browser{Zone: zone}}
+	r := syncer.Runner{Store: s, Cipher: cipher, Fetcher: newBrowser(zone, "")}
 	if token := os.Getenv("TMDB_READ_ACCESS_TOKEN"); token != "" {
 		r.Matcher = tmdb.New(token)
 	} else {

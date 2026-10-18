@@ -148,11 +148,15 @@ func (r Runner) Serve(ctx context.Context, expression string, zone *time.Locatio
 	if err != nil {
 		return errors.New("SYNC_CRON inválido")
 	}
+	return r.serve(ctx, schedule)
+}
+
+func (r Runner) serve(ctx context.Context, schedule cron.Schedule) error {
 	for {
 		if ctx.Err() != nil {
 			return nil
 		}
-		if err = r.All(ctx, ""); err != nil && ctx.Err() == nil {
+		if err := r.All(ctx, ""); err != nil && ctx.Err() == nil {
 			slog.Warn("ciclo terminou com falhas")
 		}
 		next := schedule.Next(time.Now())
