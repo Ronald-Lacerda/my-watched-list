@@ -2,7 +2,7 @@
 
 Registro pessoal do que duas pessoas assistem, com notas individuais e favoritos do ano. A coleta será própria, começando pela Netflix. O TMDB será usado somente para metadados. Nome provisório.
 
-**Estado atual: Fase 2 implementada.** App com histórico dos dois perfis, filtros, notas individuais, média, pendentes e status das conexões. Login pessoal por convite local, sem senha padrão. Consulte o [guia de primeiro acesso e uso](docs/app.md). O [coletor Netflix](docs/netflix.md) continua operando com sessões cifradas e coleta idempotente. O token TMDB ainda é opcional para usar histórico e notas; sem ele, metadados permanecem pendentes.
+**Estado atual: Fase 2 implementada.** App com histórico dos dois perfis, filtros, notas individuais, média, pendentes e status das conexões. Login por username (`ronald` e `gabriela` nesta instalação) e senha pessoal, com primeiro acesso por convite local, sem senha padrão. Consulte o [guia de primeiro acesso e uso](docs/app.md). O [coletor Netflix](docs/netflix.md) continua operando com sessões cifradas e coleta idempotente. O token TMDB ainda é opcional para usar histórico e notas; sem ele, metadados permanecem pendentes.
 
 ## Estrutura
 
@@ -50,7 +50,7 @@ go.mod / go.sum            Um módulo compartilhado por API e worker
 - `watched_on` preserva o dia informado pelo serviço. `watched_at` é opcional e só será preenchido se a fonte informar um instante real. Não inventamos meia-noite. Instantes usam `timestamptz`; a agenda e a apresentação usarão `America/Sao_Paulo` inicialmente.
 - Notas de 0 a 10 em passos de 0,5; uma por pessoa e obra do streaming, inclusive para séries e sem depender do TMDB. `source_work_id` preserva o ID da obra; `ratings.source_key` mantém a nota estável após enriquecimento. Notas antigas por `title_id` continuam legíveis. A média usa as notas disponíveis, sem persistência duplicada.
 - Episódios pertencem somente a séries e devem coincidir com o título do evento. Temporada 0 permite especiais. Nenhuma duração assistida é inferida por enquanto; duração de catálogo poderá servir a estatísticas estimadas, identificadas como tal.
-- Sem senhas padrão. A CLI cria identidades desabilitadas até o primeiro acesso por convite de uma hora. Auth usa Argon2id, sessões opacas revogáveis de 14 dias, cookie HttpOnly/SameSite e Secure em HTTPS. Histórico e notas exigem sessão; mutações também exigem Origin autorizado. As duas pessoas pertencem à mesma casa e compartilham leitura.
+- Sem senhas padrão. A CLI cria identidades desabilitadas até o primeiro acesso por convite de uma hora. Usernames são canônicos e únicos; e-mail é somente identificador administrativo legado. Auth usa Argon2id, sessões opacas revogáveis de 14 dias, cookie HttpOnly/SameSite e Secure em HTTPS. Histórico e notas exigem sessão; mutações também exigem Origin autorizado. As duas pessoas pertencem à mesma casa e compartilham leitura.
 - VPS assumida como Linux com Docker Compose v2. Specs, domínio, estratégia de backup e outros streamings serão preenchidos quando forem informados.
 
 ## Executar com Docker

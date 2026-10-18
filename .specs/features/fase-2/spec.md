@@ -13,7 +13,7 @@ Melhores do ano e estatísticas de duração/gênero (Fase 3), novos streamings,
 | Decisão | Padrão escolhido | Motivo |
 | --- | --- | --- |
 | Autorização | Usuário autorizou Fase 2 e PR separado; decisões ambíguas seguem o padrão simples documentado | Dispensa nova aprovação de spec/ferramentas, conforme instrução original |
-| Acesso | E-mail/senha, sessões opacas em cookie HttpOnly/SameSite=Lax, 14 dias; Secure em HTTPS | Backend próprio e sessão revogável, sem token em localStorage |
+| Acesso | Username/senha, sessões opacas em cookie HttpOnly/SameSite=Lax, 14 dias; Secure em HTTPS | Backend próprio e sessão revogável, sem token em localStorage |
 | Primeiro acesso | CLI gera link local de uso único, válido por 1 hora, para definir senha | Sem senha padrão, envio de e-mail ou segredo no chat |
 | Escopo dos dados | Uma casa, dois usuários provisionados por CLI; ambos veem histórico e notas de ambos | Não há cadastro público nem promessa de isolamento entre tenants |
 | Notas | 0–10 em passos de 0,5, comentário opcional até 2000 caracteres; média das notas existentes, com contador | Preserva a decisão AD-003; zero é uma nota válida |
@@ -57,6 +57,8 @@ Melhores do ano e estatísticas de duração/gênero (Fase 3), novos streamings,
 23. WHEN servir a PWA, o app SHALL fornecer manifest com ícones e service worker de shell; cache SHALL excluir /api e dados privados e modo offline SHALL avisar indisponibilidade de consulta/gravação.
 24. WHEN subir a stack atualizada, migrations, API, worker e web SHALL iniciar sem perder os dados locais; testes de API/banco e navegador SHALL usar dados sintéticos isolados, e o PR SHALL incluir instruções de primeiro acesso.
 
+25. WHEN acessar o app por username, o sistema SHALL aceitar `ronald` e `gabriela` para as pessoas existentes, normalizar espaços externos/caixa no login e throttle, rejeitar login por e-mail e username duplicado/inválido, e preservar UUIDs, senhas, sessões válidas, notas e histórico na migração. A tela SHALL pedir Usuário e a administração SHALL permitir atribuir username e gerar convite por username.
+
 ## Implicit requirements sweep
 
 | Dimensão | Cobertura |
@@ -83,3 +85,4 @@ Melhores do ano e estatísticas de duração/gênero (Fase 3), novos streamings,
 | APP-06 | 18 | verified |
 | APP-07 | 19–22 | verified |
 | APP-08 | 23–24 | verified |
+| APP-09 | 25 | verified |

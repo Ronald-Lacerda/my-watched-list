@@ -23,15 +23,26 @@ func main() {
 }
 
 func run(ctx context.Context, args []string, out io.Writer) error {
+	if len(args) > 0 && args[0] == "username" {
+		return assignUsername(ctx, args[1:], out)
+	}
 	if len(args) == 0 || args[0] != "invite" {
-		return errors.New("uso: admin invite --email EMAIL --output ARQUIVO.html")
+		return errors.New("uso: admin invite --username USUARIO --output ARQUIVO.html; admin username --email EMAIL --username USUARIO")
 	}
 	flags := flag.NewFlagSet("invite", flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	email := flags.String("email", "", "e-mail da pessoa existente")
+	username := flags.String("username", "", "login da pessoa existente")
 	path := flags.String("output", "", "novo arquivo local do convite")
-	if flags.Parse(args[1:]) != nil || flags.NArg() != 0 || *email == "" || *path == "" {
-		return errors.New("invite exige --email e --output")
+	if flags.Parse(args[1:]) != nil || flags.NArg() != 0 || (*email == "") == (*username == "") || *path == "" {
+		return errors.New("invite exige --username (ou --email legado) e --output")
+	}
+	if *username != "" {
+		var valid bool
+		*username, valid = auth.NormalizeUsername(*username)
+		if !valid {
+			return errors.New("username inválido: use 3 a 40 letras, números ou _, começando com letra")
+		}
 	}
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
@@ -62,7 +73,7 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	}
 	defer pool.Close()
 	var uid, name string
-	if err = pool.QueryRow(ctx, `SELECT id::text,name FROM users WHERE lower(email)=lower($1)`, strings.TrimSpace(*email)).Scan(&uid, &name); err != nil {
+	if err = pool.QueryRow(ctx, `SELECT id::text,name FROM users WHERE username=$1 OR lower(email)=lower($2)`, *username, strings.TrimSpace(*email)).Scan(&uid, &name); err != nil {
 		return errors.New("não foi possível localizar a pessoa")
 	}
 	token, err := (auth.Service{Pool: pool}).Invite(ctx, uid)
@@ -80,5 +91,34 @@ func run(ctx context.Context, args []string, out io.Writer) error {
 	}
 	complete = true
 	fmt.Fprintf(out, "Convite salvo em %s. Abra o arquivo no navegador em até 1 hora; apague-o após criar sua senha.\n", *path)
+	return nil
+}
+
+// Este comando administrativo só altera o identificador de login.
+func assignUsername(ctx context.Context, args []string, out io.Writer) error {
+	flags := flag.NewFlagSet("username", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	email := flags.String("email", "", "identificador legado da pessoa")
+	value := flags.String("username", "", "novo login")
+	if flags.Parse(args) != nil || flags.NArg() != 0 || strings.TrimSpace(*email) == "" {
+		return errors.New("username exige --email da conta existente e --username")
+	}
+	username, valid := auth.NormalizeUsername(*value)
+	if !valid {
+		return errors.New("username inválido: use 3 a 40 letras, números ou _, começando com letra")
+	}
+	if os.Getenv("DATABASE_URL") == "" {
+		return errors.New("DATABASE_URL obrigatória")
+	}
+	pool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+	if err != nil {
+		return errors.New("configuração de banco inválida")
+	}
+	defer pool.Close()
+	result, err := pool.Exec(ctx, `UPDATE users SET username=$2 WHERE lower(email)=lower($1)`, strings.TrimSpace(*email), username)
+	if err != nil || result.RowsAffected() != 1 {
+		return errors.New("não foi possível atribuir o username; confira a conta e se o login já está em uso")
+	}
+	fmt.Fprintf(out, "Login atualizado para %s.\n", username)
 	return nil
 }

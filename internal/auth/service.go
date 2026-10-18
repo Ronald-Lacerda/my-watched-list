@@ -20,9 +20,9 @@ var (
 )
 
 type User struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email,omitempty"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
 }
 type Session struct {
 	User      User
@@ -89,7 +89,7 @@ func (s Service) Activate(ctx context.Context, token, password string) (Session,
 	}
 	defer tx.Rollback(context.Background())
 	var user User
-	err = tx.QueryRow(ctx, `SELECT u.id::text,u.name,u.email FROM auth_invitations i JOIN users u ON u.id=i.user_id WHERE i.token_hash=$1 AND i.expires_at>now() FOR UPDATE OF i,u`, hash).Scan(&user.ID, &user.Name, &user.Email)
+	err = tx.QueryRow(ctx, `SELECT u.id::text,u.name,u.username FROM auth_invitations i JOIN users u ON u.id=i.user_id WHERE i.token_hash=$1 AND i.expires_at>now() FOR UPDATE OF i,u`, hash).Scan(&user.ID, &user.Name, &user.Username)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Session{}, ErrUnauthorized
 	}
@@ -115,12 +115,12 @@ func (s Service) Activate(ctx context.Context, token, password string) (Session,
 	return result, nil
 }
 
-func (s Service) Login(ctx context.Context, email, password string) (Session, error) {
-	email = strings.ToLower(strings.TrimSpace(email))
-	if len(email) == 0 || len(email) > 254 {
+func (s Service) Login(ctx context.Context, username, password string) (Session, error) {
+	username, valid := NormalizeUsername(username)
+	if !valid {
 		return Session{}, ErrUnauthorized
 	}
-	key := sha256.Sum256([]byte(email))
+	key := sha256.Sum256([]byte(username))
 	var attempts int
 	_, err := s.Pool.Exec(ctx, `DELETE FROM auth_attempts WHERE window_start < now()-interval '1 day'`)
 	if err != nil {
@@ -143,7 +143,7 @@ func (s Service) Login(ctx context.Context, email, password string) (Session, er
 	defer tx.Rollback(context.Background())
 	var user User
 	var encoded string
-	err = tx.QueryRow(ctx, `SELECT id::text,name,email,password_hash FROM users WHERE lower(email)=$1 FOR UPDATE`, email).Scan(&user.ID, &user.Name, &user.Email, &encoded)
+	err = tx.QueryRow(ctx, `SELECT id::text,name,username,password_hash FROM users WHERE username=$1 FOR UPDATE`, username).Scan(&user.ID, &user.Name, &user.Username, &encoded)
 	if errors.Is(err, pgx.ErrNoRows) || (err == nil && !strings.HasPrefix(encoded, passwordPrefix)) {
 		_ = argon2.IDKey([]byte(password), []byte("dummy-salt-16byt"), 2, 19456, 1, 32)
 		return Session{}, ErrUnauthorized
@@ -173,7 +173,7 @@ func (s Service) Me(ctx context.Context, token string) (User, error) {
 		return User{}, ErrUnauthorized
 	}
 	var user User
-	err := s.Pool.QueryRow(ctx, `SELECT u.id::text,u.name,u.email FROM auth_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now() AND u.password_hash<>'!disabled'`, hash).Scan(&user.ID, &user.Name, &user.Email)
+	err := s.Pool.QueryRow(ctx, `SELECT u.id::text,u.name,u.username FROM auth_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>now() AND u.password_hash<>'!disabled'`, hash).Scan(&user.ID, &user.Name, &user.Username)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrUnauthorized
 	}

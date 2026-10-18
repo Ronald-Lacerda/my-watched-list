@@ -34,8 +34,11 @@ func fixtureApp(t *testing.T) appFixture {
 	for _, name := range []string{"R", "Gabriela"} {
 		var u auth.User
 		u.Name = name
-		u.Email = strings.ToLower(name) + "@example.invalid"
-		if err := pool.QueryRow(context.Background(), `INSERT INTO users(name,email,password_hash) VALUES($1,$2,'!disabled') RETURNING id::text`, u.Name, u.Email).Scan(&u.ID); err != nil {
+		u.Username = "ronald"
+		if name == "Gabriela" {
+			u.Username = "gabriela"
+		}
+		if err := pool.QueryRow(context.Background(), `INSERT INTO users(name,email,username,password_hash) VALUES($1,$2,$3,'!disabled') RETURNING id::text`, u.Name, strings.ToLower(name)+"@example.invalid", u.Username).Scan(&u.ID); err != nil {
 			t.Fatal(err)
 		}
 		s := auth.Service{Pool: pool}
@@ -74,7 +77,7 @@ func (f appFixture) call(method, path, body string, person int, origin string) *
 func TestAuthHTTP(t *testing.T) {
 	f := fixtureApp(t)
 	ctx := context.Background()
-	body := fmt.Sprintf(`{"email":"r@example.invalid","password":%q}`, appTestPassword)
+	body := fmt.Sprintf(`{"username":"ronald","password":%q}`, appTestPassword)
 	w := f.call("POST", "/api/auth/login", body, -1, f.origin)
 	if w.Code != 200 || strings.Contains(w.Body.String(), "password_hash") || strings.Contains(w.Body.String(), appTestPassword) {
 		t.Fatal("login HTTP incorreto", w.Code, w.Body.String())
@@ -156,11 +159,11 @@ func TestHTTPOriginAndJSON(t *testing.T) {
 		}
 	}
 	for i := 0; i < 10; i++ {
-		if w := f.call("POST", "/api/auth/login", `{"email":"r@example.invalid","password":"incorreta"}`, -1, f.origin); w.Code != 401 {
+		if w := f.call("POST", "/api/auth/login", `{"username":"ronald","password":"incorreta"}`, -1, f.origin); w.Code != 401 {
 			t.Fatal("credenciais inválidas sem 401")
 		}
 	}
-	if w := f.call("POST", "/api/auth/login", `{"email":"r@example.invalid","password":"incorreta"}`, -1, f.origin); w.Code != 429 || w.Header().Get("Retry-After") != "900" {
+	if w := f.call("POST", "/api/auth/login", `{"username":"ronald","password":"incorreta"}`, -1, f.origin); w.Code != 429 || w.Header().Get("Retry-After") != "900" {
 		t.Fatal("limite HTTP não aplicado")
 	}
 }
@@ -172,7 +175,7 @@ func TestHTTPSCookieAndOriginConfiguration(t *testing.T) {
 		t.Fatal(err)
 	}
 	f.handler = handler
-	w := f.call("POST", "/api/auth/login", fmt.Sprintf(`{"email":"r@example.invalid","password":%q}`, appTestPassword), -1, "https://app.test")
+	w := f.call("POST", "/api/auth/login", fmt.Sprintf(`{"username":"ronald","password":%q}`, appTestPassword), -1, "https://app.test")
 	cookies := w.Result().Cookies()
 	if w.Code != 200 || len(cookies) != 1 || !cookies[0].Secure {
 		t.Fatal("HTTPS sem Secure")

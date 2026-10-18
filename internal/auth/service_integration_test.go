@@ -18,7 +18,7 @@ func userFixture(t *testing.T) (Service, string) {
 	pool, _ := testdb.New(t)
 	s := Service{Pool: pool}
 	var id string
-	if err := pool.QueryRow(context.Background(), `INSERT INTO users(name,email,password_hash) VALUES('R','r@example.invalid','!disabled') RETURNING id::text`).Scan(&id); err != nil {
+	if err := pool.QueryRow(context.Background(), `INSERT INTO users(name,email,username,password_hash) VALUES('R','r@example.invalid','ronald','!disabled') RETURNING id::text`).Scan(&id); err != nil {
 		t.Fatal(err)
 	}
 	return s, id
@@ -27,7 +27,7 @@ func userFixture(t *testing.T) (Service, string) {
 func TestCredentialLifecycle(t *testing.T) {
 	ctx := context.Background()
 	s, id := userFixture(t)
-	if _, err := s.Login(ctx, "r@example.invalid", testPassword); !errors.Is(err, ErrUnauthorized) {
+	if _, err := s.Login(ctx, "ronald", testPassword); !errors.Is(err, ErrUnauthorized) {
 		t.Fatal("usuário desabilitado autenticou")
 	}
 	token, err := s.Invite(ctx, id)
@@ -54,7 +54,7 @@ func TestCredentialLifecycle(t *testing.T) {
 	if err != nil || me.ID != id || me.Name != "R" {
 		t.Fatal("sessão não autenticou", err)
 	}
-	logged, err := s.Login(ctx, " R@EXAMPLE.INVALID ", testPassword)
+	logged, err := s.Login(ctx, " RONALD ", testPassword)
 	if err != nil || logged.User.ID != id {
 		t.Fatal("login correto rejeitado", err)
 	}
@@ -75,7 +75,7 @@ func TestCredentialLifecycle(t *testing.T) {
 	if _, err = s.Me(ctx, first.Token); !errors.Is(err, ErrUnauthorized) {
 		t.Fatal("senha nova não revogou sessão anterior")
 	}
-	if _, err = s.Login(ctx, "r@example.invalid", testPassword); !errors.Is(err, ErrUnauthorized) {
+	if _, err = s.Login(ctx, "ronald", testPassword); !errors.Is(err, ErrUnauthorized) {
 		t.Fatal("senha anterior ainda válida")
 	}
 	if _, err = s.Pool.Exec(ctx, `UPDATE auth_sessions SET created_at=now()-interval '15 days',expires_at=now()-interval '1 minute'`); err != nil {
@@ -147,24 +147,24 @@ func TestLoginThrottle(t *testing.T) {
 		t.Fatal(err)
 	}
 	for i := 0; i < 10; i++ {
-		if _, err = s.Login(ctx, "r@example.invalid", "Senha incorreta 123"); !errors.Is(err, ErrUnauthorized) {
+		if _, err = s.Login(ctx, "ronald", "Senha incorreta 123"); !errors.Is(err, ErrUnauthorized) {
 			t.Fatal("tentativa inválida sem erro genérico", i, err)
 		}
 	}
-	if _, err = s.Login(ctx, "r@example.invalid", testPassword); !errors.Is(err, ErrThrottled) {
+	if _, err = s.Login(ctx, "ronald", testPassword); !errors.Is(err, ErrThrottled) {
 		t.Fatal("11ª tentativa não bloqueada", err)
 	}
 	if _, err = s.Pool.Exec(ctx, `UPDATE auth_attempts SET window_start=now()-interval '16 minutes'`); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.Login(ctx, "r@example.invalid", testPassword); err != nil {
+	if _, err = s.Login(ctx, "ronald", testPassword); err != nil {
 		t.Fatal("janela não expirou", err)
 	}
 	var count int
 	if err = s.Pool.QueryRow(ctx, `SELECT count(*) FROM auth_attempts`).Scan(&count); err != nil || count != 0 {
 		t.Fatal("sucesso não zerou tentativas", count, err)
 	}
-	if _, err = s.Login(ctx, "inexistente@example.invalid", testPassword); !errors.Is(err, ErrUnauthorized) {
+	if _, err = s.Login(ctx, "inexistente", testPassword); !errors.Is(err, ErrUnauthorized) {
 		t.Fatal("usuário desconhecido não recebeu erro genérico", err)
 	}
 }

@@ -98,7 +98,7 @@ func loginBrowser(t *testing.T, b browserApp, person int) {
 		t.Fatal(err)
 	}
 	visible(t, b.page.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Bem-vindo de volta."}))
-	if err := b.page.GetByLabel("E-mail").Fill(b.f.users[person].Email); err != nil {
+	if err := b.page.GetByLabel("Usuário").Fill(b.f.users[person].Username); err != nil {
 		t.Fatal(err)
 	}
 	if err := b.page.GetByLabel("Senha", pw.PageGetByLabelOptions{Exact: pw.Bool(true)}).Fill(appTestPassword); err != nil {
@@ -118,7 +118,7 @@ func TestBrowserAuthentication(t *testing.T) {
 	}
 	visible(t, p.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Bem-vindo de volta."}))
 	screenshot(t, p, "fase2-login.png")
-	if err := p.GetByLabel("E-mail").Fill("r@example.invalid"); err != nil {
+	if err := p.GetByLabel("Usuário").Fill("ronald"); err != nil {
 		t.Fatal(err)
 	}
 	if err := p.GetByLabel("Senha", pw.PageGetByLabelOptions{Exact: pw.Bool(true)}).Fill("incorreta"); err != nil {

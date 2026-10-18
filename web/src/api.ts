@@ -1,5 +1,5 @@
 export interface Person { id: string; name: string }
-export interface User extends Person { email: string }
+export interface User extends Person { username: string }
 export interface Rating { user_id: string; name: string; score: number; comment: string; updated_at: string }
 export interface RatingSummary { ratings: Rating[]; average: number | null; ratings_count: number }
 export interface WatchItem extends RatingSummary {

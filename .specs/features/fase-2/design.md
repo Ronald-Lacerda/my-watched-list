@@ -28,7 +28,7 @@ Sessões e convites usam 32 bytes aleatórios codificados em base64url; banco gu
 
 | Método/rota | Contrato |
 | --- | --- |
-| POST /api/auth/login | e-mail/senha, sessão cookie; 401/429 |
+| POST /api/auth/login | username/senha, sessão cookie; 401/429 |
 | POST /api/auth/activate | token de convite/senha; consumo único e nova sessão |
 | GET /api/auth/me | pessoa autenticada ou 401 |
 | POST /api/auth/logout | revoga sessão e expira cookie |
@@ -55,3 +55,6 @@ Origin permitido é configurável em APP_ORIGINS, com localhost e 127.0.0.1:8080
 ## Research
 
 [Argon2 Go](https://pkg.go.dev/golang.org/x/crypto/argon2), [parâmetros OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html), [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie) e [PWA instalável](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable) foram conferidos nas fontes primárias. Context7 não está disponível nesta sessão. As decisões continuam documentadas na spec; não usar auth gerenciada nem integração Supabase.
+
+
+A alteração solicitada após a entrega usa users.username canônico (3–40 caracteres ASCII, primeiro letra, demais letras/números/_), índice único e validação equivalente no serviço. Login e hash do throttle compartilham a normalização trim/lower. A migration 4 dá usernames provisórios únicos às contas antigas; admin username atribui os logins amigáveis explicitamente sem trocar IDs/credenciais. O e-mail permanece somente como identificador administrativo legado do coletor, fora dos DTOs públicos de auth. Convites aceitam --username; --email permanece compatível na CLI.

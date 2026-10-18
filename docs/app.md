@@ -1,6 +1,19 @@
 # Usar o app
 
-A Fase 2 oferece histórico compartilhado, filtros por pessoa/streaming/período, notas individuais, média e pendentes de avaliação. Cada pessoa entra com sua própria senha. O ambiente representa uma única casa: ambas podem consultar o histórico e as notas das duas pessoas.
+A Fase 2 oferece histórico compartilhado, filtros por pessoa/streaming/período, notas individuais, média e pendentes de avaliação. Cada pessoa entra com seu username e sua própria senha. Os logins desta instalação são `ronald` (perfil R) e `gabriela`. O ambiente representa uma única casa: ambas podem consultar o histórico e as notas das duas pessoas.
+
+## Usernames e primeiro acesso
+
+O login usa apenas username e senha. Nomes são normalizados para minúsculas e aceitam 3–40 caracteres: começam com letra e continuam com letras ASCII, números ou `_`. Espaços externos são ignorados. O limite de tentativas usa a mesma identidade canônica, inclusive com caixa diferente. E-mail não autentica.
+
+A migration 4 preserva as contas e lhes dá um username provisório único `user_...`. Para atribuir os logins amigáveis, use a CLI administrativa com os identificadores legados existentes:
+
+```sh
+docker compose --env-file .env -f deploy/compose.yaml exec api /app/admin username --email r@mywatchedlist.invalid --username ronald
+docker compose --env-file .env -f deploy/compose.yaml exec api /app/admin username --email gabriela@mywatchedlist.invalid --username gabriela
+```
+
+Isso altera somente o login; senhas, sessões, IDs, notas e histórico permanecem. Para novas pessoas criadas por `worker user-add`, atribua também um username antes do primeiro acesso. O campo e-mail continua no cadastro administrativo legado do coletor, sem aparecer no formulário ou nos DTOs de autenticação. A CLI de convites ainda aceita `--email` para compatibilidade.
 
 ## Primeiro acesso
 
@@ -9,19 +22,19 @@ Suba a stack conforme o README. Os usuários existentes do coletor continuam sem
 Com Docker, gere um arquivo pessoal para uma identidade já criada:
 
 ```sh
-docker compose --env-file .env -f deploy/compose.yaml exec api /app/admin invite --email r@mywatchedlist.invalid --output /tmp/primeiro-r.html
+docker compose --env-file .env -f deploy/compose.yaml exec api /app/admin invite --username ronald --output /tmp/primeiro-r.html
 docker compose --env-file .env -f deploy/compose.yaml cp api:/tmp/primeiro-r.html .local/primeiro-r.html
 docker compose --env-file .env -f deploy/compose.yaml exec api rm /tmp/primeiro-r.html
 ```
 
-Crie `.local` antes de copiar. Repita para `gabriela@mywatchedlist.invalid`, usando outro nome de arquivo. Os e-mails acima são identidades locais usadas na instalação de desenvolvimento; use o e-mail registrado por `worker user-add` na sua instalação. A CLI não cria usuários novos.
+Crie `.local` antes de copiar. Repita com `--username gabriela`, usando outro nome de arquivo. A CLI não cria usuários novos.
 
 Abra o HTML no navegador. Ele leva ao app para escolher e confirmar uma senha de 12 a 128 caracteres. O convite expira em uma hora, vale uma vez e é removido do endereço ao abrir. Não envie o arquivo pelo chat nem o versione; apague-o após usar. Novo convite substitui o anterior. Para recuperar o acesso, gere outro arquivo; ao definir a nova senha, todas as sessões anteriores daquela pessoa são revogadas.
 
 Fora do Docker, com `DATABASE_URL` e `APP_ORIGINS` no ambiente:
 
 ```sh
-go run ./api/cmd/admin invite --email r@mywatchedlist.invalid --output .local/primeiro-r.html
+go run ./api/cmd/admin invite --username ronald --output .local/primeiro-r.html
 ```
 
 O padrão de origem é `http://127.0.0.1:8080`; a primeira origem configurada é o destino do convite. Em produção, o Compose override usa `https://APP_DOMAIN`, e o cookie recebe `Secure`. Em desenvolvimento, API e Vite devem ser acessados pela mesma origem pública autorizada: para Vite na porta 5173, configure `APP_ORIGINS=http://127.0.0.1:5173` na API e reinicie-a. Não use URLs públicas HTTP para senhas.
@@ -46,7 +59,7 @@ Sem rede, o app avisa que não atualiza o histórico nem salva notas. Um formul�
 
 ## Operação, testes e rollback
 
-Antes de atualizar, faça backup de PostgreSQL e guarde a chave `SESSION_ENCRYPTION_KEY` separadamente. A migration 3 é aditiva e preserva usuários, conexões, eventos e notas anteriores. `admin` está na mesma imagem da API. A API precisa de `APP_ORIGINS`, sem caminho, com origens separadas por vírgula e de um mesmo esquema HTTP/HTTPS. O override de produção usa exclusivamente o domínio HTTPS.
+Antes de atualizar, faça backup de PostgreSQL e guarde a chave `SESSION_ENCRYPTION_KEY` separadamente. As migrations 3 e 4 são aditivas e preservam usuários, conexões, eventos, notas, senhas e sessões anteriores. `admin` está na mesma imagem da API. A API precisa de `APP_ORIGINS`, sem caminho, com origens separadas por vírgula e de um mesmo esquema HTTP/HTTPS. O override de produção usa exclusivamente o domínio HTTPS.
 
 O rollback de migration para a Fase 1 é bloqueado quando existem notas novas sem `title_id`: isso impede perda silenciosa. Faça backup e planeje exportação/associação dessas notas antes de reverter o schema. Reverter somente as imagens mantém os dados novos no banco, mas a Fase 1 não oferece a interface de notas. Nunca use `down -v` no ambiente com histórico.
 
@@ -62,5 +75,7 @@ go build ./...
 Integração requer `TEST_DATABASE_URL` de um PostgreSQL descartável (veja README) e Chromium instalado pelo playwright-go. Os testes criam schemas isolados com pessoas/eventos sintéticos; nunca apontam para `DATABASE_URL`. O build web é obrigatório antes dos testes Chromium. No Windows com pouca memória virtual, use `GOMAXPROCS=2`, `GOFLAGS=-p=1` e `GOMEMLIMIT=512MiB` e execute as verificações em sequência.
 
 Os testes exercitam login/convite/expiração/logout, isolamento de notas, zero, concorrência, rollback, filtros/cursor, duas pessoas no browser, erros com retry, celular/teclado e PWA offline sem cache privado. O CI também sobe o Compose, verifica prontidão, manifest, histórico sem sessão (401) e Chromium no worker.
+
+Reverter a migration 4 remove os usernames, mantendo os identificadores legados e credenciais; uma nova aplicação exige atribuir os logins amigáveis novamente.
 
 Endpoints privados: `GET /api/auth/me`, `/api/filters`, `/api/history`, `/api/connections`; `PUT/DELETE /api/events/{id}/rating`. Atores vêm da sessão, nunca do corpo. Login e ativação usam `POST /api/auth/login` e `/api/auth/activate`; logout usa `POST /api/auth/logout`. Mutações exigem `Origin` permitido e JSON quando há corpo. Cookies são opacos, HttpOnly e SameSite=Lax; somente hashes de tokens ficam no banco. Senhas usam Argon2id com salt aleatório. O login limita tentativas persistidas por identificador; erros de credencial não distinguem pessoa inexistente de senha incorreta.

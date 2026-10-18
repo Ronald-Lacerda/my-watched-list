@@ -172,13 +172,13 @@ func (a *app) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Email    string `json:"email"`
+		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 	if !readJSON(w, r, &body) {
 		return
 	}
-	s, err := a.auth.Login(r.Context(), body.Email, body.Password)
+	s, err := a.auth.Login(r.Context(), body.Username, body.Password)
 	if err != nil {
 		a.authError(w, err)
 		return

@@ -24,7 +24,7 @@ Build: Quick + Full + `go build ./...`, `npm --prefix web run build`, gofmt e Co
 Oito entregas coesas, implementadas em sequência local. O usuário já autorizou a implementação e as decisões simples; ferramentas normais do projeto são mantidas. Verifier independente obrigatório após o último commit.
 
 ```text
-T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11
+T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10 -> T11 -> T12
 ```
 
 ## Task Breakdown
@@ -105,6 +105,13 @@ Depends on: T10
 Tests: integration browser
 Gate: Full
 - [x] AC18/20: TestBrowserJournalAndIndividualRatings agora espera o heading de login após clicar Sair e antes de loginBrowser navegar. O CI pull_request de 845b472 falhou na espera do heading após navegação prematura; o job push do mesmo código passou. A nova espera mantém todas as asserções e impede cancelar a requisição de logout em andamento. Fluxo Chromium aprovado em cinco repetições consecutivas; Full/Quick/vet/build aprovados. Nenhum código de produção ou timeout foi alterado. Verifier confirmou com atraso controlado de 500 ms: com a espera passa, sem a espera falha, restaurando passa. CI do novo commit é obrigatório antes de tirar o PR do rascunho.
+
+### T12: autenticar por username
+Where: internal/auth
+Depends on: T11
+Tests: unit, integration PostgreSQL/HTTP/admin e browser
+Gate: Build
+- [x] APP-09/AC25: migration 4, login/DTO/normalização/throttle por username, atribuição administrativa, convites e tela Usuário. TestUsernameMigrationPreservesCredentials exige token anterior válido, mesmo hash/UUID/evento/nota zero e login de ambas as pessoas; rejeita colisões/sintaxe no banco. TestUsernameCanonicalThrottle exige 11ª tentativa bloqueada com caixa/espaços e um único identificador persistido. TestUsernameLoginContract exige ronald/gabriela corretos, ausência de email no DTO e rejeição do contrato antigo. TestUsernameAdministration exige colisão recusada, estado desabilitado preservado e convite ligado à pessoa correta. E2Es existentes mantêm asserções e usam o contrato solicitado. Build web, Full/Quick/vet/build Go e Compose build/up aprovados. Backup validado antes da migration; senhas reais comparadas sem expor hashes, UUIDs e vínculos de eventos/notas preservados; logins ronald/gabriela atribuídos às contas existentes. Revisão independente e CI do delta pendentes antes de liberar o PR novamente.
 
 ## Conferência estrutural
 
