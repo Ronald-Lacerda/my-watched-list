@@ -139,4 +139,51 @@ func TestPersistence(t *testing.T) {
 	if err != nil || statuses[0].Status != "error" || *statuses[0].ErrorCode != "parser_changed" {
 		t.Fatal("status de erro perdido")
 	}
+	pending, err := l.Pending(ctx, id)
+	if err != nil || len(pending) != 2 {
+		t.Fatal("pendências perdidas", err)
+	}
+	if err = l.DeferMatch(ctx, pending[0].ID, "ambiguous"); err != nil {
+		t.Fatal(err)
+	}
+	var status string
+	if err = pool.QueryRow(ctx, `SELECT enrichment_status FROM watch_events WHERE id=$1 AND title_id IS NULL AND enrich_after>now()`, pending[0].ID).Scan(&status); err != nil || status != "ambiguous" {
+		t.Fatal("retry não persistido", err)
+	}
+	year, runtime := 2024, 100
+	m := Title{TMDBID: 10, MediaType: "movie", Name: "Filme", Original: "Movie", Overview: "Sinopse", Poster: "/poster.jpg", Year: &year, Runtime: &runtime, Genres: []string{"Drama"}}
+	if err = l.Link(ctx, pending[1], m); err != nil {
+		t.Fatal(err)
+	}
+	var title, overview, poster, kind string
+	var tmdbID int64
+	var genres []string
+	err = pool.QueryRow(ctx, `SELECT t.title,t.overview,t.poster_path,t.media_type,t.tmdb_id,t.genres FROM titles t JOIN watch_events w ON w.title_id=t.id WHERE w.id=$1 AND w.enrichment_status='matched'`, pending[1].ID).Scan(&title, &overview, &poster, &kind, &tmdbID, &genres)
+	if err != nil || title != "Filme" || overview != "Sinopse" || poster != "/poster.jpg" || kind != "movie" || tmdbID != 10 || len(genres) != 1 || genres[0] != "Drama" {
+		t.Fatal("metadados não persistidos", err)
+	}
+	season, number := 1, 2
+	ep := e
+	ep.SourceKey = "episódio"
+	ep.SourceTitleID = "2"
+	ep.MediaType = "tv"
+	ep.MatchTitle = "Série"
+	ep.SeasonNumber = &season
+	ep.EpisodeNumber = &number
+	if _, err = l.Save(ctx, a, []collector.Event{ep}, nil); err != nil {
+		t.Fatal(err)
+	}
+	list, err := l.Pending(ctx, id)
+	if err != nil || len(list) != 1 || list[0].Event.SourceTitleID != "2" {
+		t.Fatal("pendência de episódio incorreta", err)
+	}
+	m = Title{TMDBID: 20, MediaType: "tv", Name: "Série", EpisodeValid: true, EpisodeName: "Ep 2"}
+	if err = l.Link(ctx, list[0], m); err != nil {
+		t.Fatal(err)
+	}
+	var gotSeason, gotNumber int
+	err = pool.QueryRow(ctx, `SELECT e.season_number,e.episode_number FROM episodes e JOIN watch_events w ON w.episode_id=e.id WHERE w.id=$1 AND w.title_id=e.title_id`, list[0].ID).Scan(&gotSeason, &gotNumber)
+	if err != nil || gotSeason != 1 || gotNumber != 2 {
+		t.Fatal("episódio não vinculado", err)
+	}
 }

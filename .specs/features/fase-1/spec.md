@@ -49,6 +49,6 @@ App de notas, autenticação web, rankings, outros streamings e execução do fa
 | NFLX-02 | Normalização, AC 3–4 | verified |
 | NFLX-03 | Browser, AC 5–6 | pending |
 | NFLX-04 | Persistência, AC 7–8 | verified |
-| NFLX-05 | Metadados, AC 9–10 | pending |
+| NFLX-05 | Metadados, AC 9–10 | verified |
 | NFLX-06 | CLI e agenda, AC 6/11/12 | pending |
 | NFLX-07 | Deploy, AC 13 | pending |

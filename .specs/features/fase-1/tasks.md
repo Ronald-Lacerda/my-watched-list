@@ -61,7 +61,7 @@ Where: worker/tmdb
 Depends on: T4
 Tests: unit HTTP e integração postgres
 Gate: Full
-- [ ] Match conservador, metadados, episódios e pendências; NFLX-05.
+- [x] Match conservador, metadados, episódios e pendências; NFLX-05. TestMatch cobre filme, série/episódio, ambiguidade inclusive em segunda página, vazio e HTTP 429. TestPersistence verifica título/sinopse/pôster/gêneros vinculados, episódio e retry durável sem vínculo indevido. go test e vet aprovados.
 
 ### T6: comandos e agenda
 Where: worker/cmd/worker
