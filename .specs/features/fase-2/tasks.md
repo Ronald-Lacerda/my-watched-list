@@ -69,7 +69,7 @@ Where: web/src
 Depends on: T5
 Tests: integration browser
 Gate: Full
-- [ ] Ativação, login/logout, cliente HTTP e shell adaptável, com E2E do fluxo de acesso. APP-06.
+- [x] Ativação, login/logout, cliente HTTP e shell adaptável, com E2E do fluxo de acesso. APP-06. Build web, Full/Quick/vet aprovados. TestBrowserAuthentication usa Chromium com API/PostgreSQL reais: login errado em português, login correto, persistência após reload, nome R, logout, convite, confirmação de senha e ativação. Asserta localStorage/sessionStorage vazios, cookie invisível ao JavaScript e remoção do token do endereço. O teste revelou navegação por fragmento sem reload; hashchange agora também ativa o convite. Screenshot de login revisado visualmente; CI prepara o build web antes da integração.
 
 ### T7: histórico e avaliações na interface
 Where: web/src

@@ -1,0 +1,31 @@
+import { useState, type FormEvent } from 'react'
+import { api, message, type User } from './api'
+import { Brand, Icon } from './icons'
+
+export function AuthScreen({ invite, onAuthenticated }: { invite: string | null; onAuthenticated: (user: User) => void }) {
+  const [email, setEmail] = useState(''), [password, setPassword] = useState(''), [confirmation, setConfirmation] = useState('')
+  const [busy, setBusy] = useState(false), [error, setError] = useState('')
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    if (busy) return
+    if (invite && (Array.from(password).length < 12 || Array.from(password).length > 128)) { setError('Use uma senha de 12 a 128 caracteres.'); return }
+    if (invite && password !== confirmation) { setError('As senhas precisam ser iguais.'); return }
+    setError(''); setBusy(true)
+    try {
+      const result = await api<{ user: User }>(invite ? '/auth/activate' : '/auth/login', { method: 'POST', body: JSON.stringify(invite ? { token: invite, password } : { email, password }) })
+      setPassword(''); setConfirmation(''); onAuthenticated(result.user)
+    } catch (err) { setError(message(err)) } finally { setBusy(false) }
+  }
+  return <div className="auth-layout">
+    <section className="auth-story"><Brand /><div className="auth-editorial"><p className="eyebrow">UM REGISTRO A DOIS</p><h1>O que vimos.<br /><em>O que ficou.</em></h1><p>Algumas histórias terminam nos créditos.<br />As nossas continuam aqui.</p><div className="film-art" aria-hidden="true"><div className="film-card film-card-back"><span>UMA BOA HISTÓRIA</span><div className="film-orbit" /></div><div className="film-card film-card-front"><div className="film-sun" /><span>PARA LEMBRAR<br /><strong>juntos.</strong></span></div><div className="film-ticket"><Icon name="star" size={16} /> CADA OPINIÃO CONTA</div></div></div><p className="auth-caption">Nosso próximo favorito pode estar a um play de distância.</p></section>
+    <main className="auth-main"><div className="auth-form-wrap"><span className="small-mark"><Icon name={invite ? 'star' : 'play'} size={22} /></span><p className="eyebrow">SEU ESPAÇO, NOSSA HISTÓRIA</p><h2>{invite ? 'Vamos começar?' : 'Bem-vindo de volta.'}</h2><p className="muted auth-description">{invite ? 'Crie sua senha para guardar suas opiniões e descobrir o que ficou para vocês.' : 'Entre para revisitar o que assistimos e deixar sua nota.'}</p>
+      <form onSubmit={submit}>
+        {!invite && <label className="field">E-mail<input type="email" name="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required placeholder="voce@exemplo.com" /></label>}
+        <label className="field">{invite ? 'Crie uma senha' : 'Senha'}<input type="password" name="password" autoComplete={invite ? 'new-password' : 'current-password'} value={password} onChange={event => setPassword(event.target.value)} required placeholder={invite ? 'Pelo menos 12 caracteres' : 'Sua senha'} /></label>
+        {invite && <><label className="field">Confirme a senha<input type="password" name="confirmation" autoComplete="new-password" value={confirmation} onChange={event => setConfirmation(event.target.value)} required placeholder="Repita sua senha" /></label><p className="field-hint">Use entre 12 e 128 caracteres. Sua senha é só sua.</p></>}
+        {error && <p className="notice error" role="alert">{error}</p>}
+        <button className="button primary auth-submit" disabled={busy} type="submit">{busy ? 'Só um instante…' : invite ? 'Criar minha conta' : 'Entrar'}{!busy && <Icon name="arrow" size={18} />}</button>
+      </form><p className="auth-help">{invite ? 'Este link é pessoal, de uso único e válido por uma hora.' : 'Primeiro acesso? Abra o convite pessoal gerado neste computador para criar sua senha.'}</p><div className="auth-form-footer"><span className="status-dot" /> Feito para o nosso tempo juntos.</div>
+    </div></main>
+  </div>
+}
