@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 10,
+  "next_id": 11,
   "lessons": [
     {
       "id": "L-001",
@@ -167,6 +167,24 @@
       ],
       "created": "2026-10-18T23:02:52Z",
       "last_seen": "2026-10-18T23:09:37Z"
+    },
+    {
+      "id": "L-010",
+      "key": "gate_fail::aguarde a tela de entrada apos logout antes de navegar ou autenticar outra pessoa nos testes de navegador",
+      "text": "Aguarde a tela de entrada após logout antes de navegar ou autenticar outra pessoa nos testes de navegador.",
+      "signal": "gate_fail",
+      "scope": "browser",
+      "status": "candidate",
+      "features": [
+        "fase-2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "T11/CI39175731069 (browser)"
+      ],
+      "created": "2026-10-18T23:25:57Z",
+      "last_seen": "2026-10-18T23:25:57Z"
     }
   ]
 }

@@ -104,7 +104,7 @@ Where: api/internal/httpapi
 Depends on: T10
 Tests: integration browser
 Gate: Full
-- [x] AC18/20: TestBrowserJournalAndIndividualRatings agora espera o heading de login após clicar Sair e antes de loginBrowser navegar. O CI pull_request de 845b472 falhou na espera do heading após navegação prematura; o job push do mesmo código passou. A nova espera mantém todas as asserções e impede cancelar a requisição de logout em andamento. Fluxo Chromium aprovado em cinco repetições consecutivas; Full/Quick/vet/build aprovados. Nenhum código de produção ou timeout foi alterado. CI do novo commit é obrigatório antes de tirar o PR do rascunho.
+- [x] AC18/20: TestBrowserJournalAndIndividualRatings agora espera o heading de login após clicar Sair e antes de loginBrowser navegar. O CI pull_request de 845b472 falhou na espera do heading após navegação prematura; o job push do mesmo código passou. A nova espera mantém todas as asserções e impede cancelar a requisição de logout em andamento. Fluxo Chromium aprovado em cinco repetições consecutivas; Full/Quick/vet/build aprovados. Nenhum código de produção ou timeout foi alterado. Verifier confirmou com atraso controlado de 500 ms: com a espera passa, sem a espera falha, restaurando passa. CI do novo commit é obrigatório antes de tirar o PR do rascunho.
 
 ## Conferência estrutural
 

@@ -1,14 +1,14 @@
 # Validation da Fase 2: PASS
 
-**Veredito: PASS.** Terceira revisão independente em a2326b2: 24/24 critérios verificados, gates aprovados e nenhum gap restante. Perfil, pessoa, serviço e horário das conexões têm asserções discriminantes. Os quatro mutantes finais foram mortos; o sensor consolidado cobre 15 comportamentos.
+**Veredito: PASS.** 24/24 critérios verificados e nenhum gap restante. Revisão completa em a2326b2 e revisão do delta T11 em 0bb53ab, sem mudanças de produção. A espera de conclusão do logout eliminou a corrida do teste, reproduzida com atraso controlado. Sensor de produção consolidado: 15 comportamentos discriminados.
 
 - Data: 2026-10-18.
 - Verifier: subagente independente; não escreveu a implementação nem os testes entregues.
-- Range revisado: `feat/fase-1-netflix..a2326b2`, branch `feat/fase-2-app`.
+- Range revisado: `feat/fase-1-netflix..0bb53ab`, branch `feat/fase-2-app`.
 - Fonte de verdade: `.specs/features/fase-2/spec.md`, 24 critérios; design e tasks lidos.
-- Isolamento: export de `git archive a2326b2` em diretório temporário, com junction somente para `web/node_modules`. Build, testes, probes e mutações executados no export. Nenhum `git stash`, acesso a .env/.local pessoal, cookies pessoais ou banco pessoal.
+- Isolamento: exports de `git archive a2326b2` e `git archive 0bb53ab` em diretório temporário, com junction somente para `web/node_modules`. Build, testes, probes e mutações executados no export. Nenhum `git stash`, acesso a .env/.local pessoal, cookies pessoais ou banco pessoal.
 - Banco exclusivo dos testes: `127.0.0.1:55432/watched_test`, com schemas sintéticos criados/removidos por teste (`internal/testdb/db.go:37`).
-- T1–T10 estão marcadas e commitadas; as marcações do autor não foram usadas como evidência de aprovação.
+- T1–T11 estão marcadas e commitadas; as marcações do autor não foram usadas como evidência de aprovação.
 
 ## Cobertura rederivada do spec
 
@@ -34,14 +34,16 @@
 | 16 | Notas individuais/média/contador; 0+10=5/2 e nota única=ela/1 | `api/internal/httpapi/ratings_integration_test.go:35`: count1/avg0/user/score/comment; :45 count=2/avg5; :49 avg9.25; :73 count1/avg10 da outra pessoa. | PASS |
 | 17 | Pendentes por obra e pessoa; zero remove apenas pendência própria | `api/internal/httpapi/ratings_integration_test.go:31` exige 3 obras; :38 exige 2 após zero; :41 outra pessoa segue3; :63 série avaliada sai uma vez; :80 delete devolve pendente. | PASS |
 | 18 | Ativação/login/me/logout; erro PT; sem segredo em storage | `api/internal/httpapi/browser_integration_test.go:132` exige erro PT; :140 identidade R após reload; :151 localStorage/sessionStorage==0 e cookie não acessível; :157 logout; :166 fragmento removido; :180 confirma senhas; :189 ativação entra no histórico. | PASS |
-| 19 | Seleção atual, reset de cursor, loading/vazio/erro/retry | `api/internal/httpapi/journal_browser_integration_test.go:71`–:78 verifica IDs selecionados/vazio; :181/:183 50→61; :184 IDs únicos61; :188/:189 filtro reseta para1/ID correto; :196/:201 falha/retry. :40 só conclui estado quando feed-loading ausente. `web/src/Journal.tsx:24` aborta solicitações antigas e reinicia cursor. | PASS |
-| 20 | Criar/editar/excluir própria nota/comment, outra pessoa/média, persistir reload | `api/internal/httpapi/journal_browser_integration_test.go:94` reload; :99/:103 zero persistido; :111 comentário da outra pessoa visível; :116 média5; :121 edição→4,25; :125 exclusão→0; :126 nota alheia0 preservada. Complementado por valores exatos de comentário no AC13/14. | PASS |
-| 21 | UI mostra serviço/pessoa/perfil/sync/status, orientação needs_login, sem sessão | `api/internal/httpapi/history_integration_test.go:139` exige campos da API. `api/internal/httpapi/journal_browser_integration_test.go:138` exige orientação completa; :139 count==3; :143–145 define Netflix/R/R/Conectada, Netflix/Gabriela/Gabriela/Precisa de login, Prime Video/R/R/Conectada; :147 seleciona heading do serviço/perfil; :149 exige perfil exato; :150 estado; :151 pessoa exata; :154 data 18/10/2026 e hora 09:00; :158 ausência de segredo. Mutantes M12–M15 mortos. | PASS, F3/F3b corrigidas |
-| 22 | 390px sem overflow; filtros/dialog acessíveis; Escape e foco de retorno | `api/internal/httpapi/journal_browser_integration_test.go:84` envia Escape; :89 exige foco no botão original; :166 scrollWidth<=innerWidth em 390; :169 mesmo limite no dialog. :67/:69 e helpers :22/:28 encontram controles por rótulo acessível; dialog encontrado por papel. | PASS |
+| 19 | Seleção atual, reset de cursor, loading/vazio/erro/retry | `api/internal/httpapi/journal_browser_integration_test.go:71`–:78 verifica IDs selecionados/vazio; :182/:184 50→61; :185 IDs únicos61; :189/:190 filtro reseta para1/ID correto; :197/:202 falha/retry. :40 só conclui estado quando feed-loading ausente. `web/src/Journal.tsx:24` aborta solicitações antigas e reinicia cursor. | PASS |
+| 20 | Criar/editar/excluir própria nota/comment, outra pessoa/média, persistir reload | `api/internal/httpapi/journal_browser_integration_test.go:94` reload; :99/:103 zero persistido; :112 comentário da outra pessoa visível; :117 média5; :122 edição→4,25; :126 exclusão→0; :127 nota alheia0 preservada. Complementado por valores exatos de comentário no AC13/14. A saída antes da troca de pessoa é agora confirmada em `api/internal/httpapi/journal_browser_integration_test.go:108`. | PASS |
+| 21 | UI mostra serviço/pessoa/perfil/sync/status, orientação needs_login, sem sessão | `api/internal/httpapi/history_integration_test.go:139` exige campos da API. `api/internal/httpapi/journal_browser_integration_test.go:139` exige orientação completa; :140 count==3; :144–146 define Netflix/R/R/Conectada, Netflix/Gabriela/Gabriela/Precisa de login, Prime Video/R/R/Conectada; :148 seleciona heading do serviço/perfil; :150 exige perfil exato; :151 estado; :152 pessoa exata; :155 data 18/10/2026 e hora 09:00; :159 ausência de segredo. Mutantes M12–M15 mortos. | PASS, F3/F3b corrigidas |
+| 22 | 390px sem overflow; filtros/dialog acessíveis; Escape e foco de retorno | `api/internal/httpapi/journal_browser_integration_test.go:84` envia Escape; :89 exige foco no botão original; :167 scrollWidth<=innerWidth em 390; :170 mesmo limite no dialog. :67/:69 e helpers :22/:28 encontram controles por rótulo acessível; dialog encontrado por papel. | PASS |
 | 23 | Manifest/ícones/SW shell; sem cache API/privado; offline avisa e não grava | `api/internal/httpapi/pwa_browser_integration_test.go:44` exige manifest standalone/start_url e ícones192/512; :61 permite apenas shell/assets; :75 aviso Sem conexão; :79 banco sem nota offline; :86/:88 banner/zero cards após reload offline; :95 recuperação6. | PASS |
 | 24 | Stack inicia, dados preservados, testes sintéticos isolados, instruções de acesso | Preservação sintética AC1/3; isolamento em `internal/testdb/db.go:37` e fixtures. Config Compose local/HTTPS exit0 repetidos nesta revisão; smoke independente em stack existente: readyz200, HTML200, manifest200, history sem sessão401. Instruções em `docs/app.md:5` e convite funcional/sem token em saída em `api/cmd/admin/main_integration_test.go:34`–:49. Build/up e backup pessoais não foram repetidos; CI cobre startup em `.github/workflows/checks.yml:71`. | PASS com limite operacional descrito |
 
 ## Gates independentes
+
+Baseline completo executado independentemente em a2326b2. A correção posterior só adiciona uma espera observável no E2E; em 0bb53ab o build web e o teste alvo foram repetidos, com o probe abaixo. Os comandos completos anteriores não foram repetidos sem mudança de produção.
 
 Todos os comandos shell passaram por `rtk proxy`. Go executado em série com `GOMAXPROCS=2 GOFLAGS=-p=1 GOMEMLIMIT=512MiB`; apenas `TEST_DATABASE_URL` sintético foi disponibilizado, removendo `DATABASE_URL` herdado. O teste de CLI define seu próprio DATABASE_URL para o schema sintético.
 
@@ -98,7 +100,26 @@ Histórico: até 4d94eda, M8 sobreviveu. Em 266a19e, M8 foi morto e M12 sobreviv
 | F3, orientação não discriminante | `api/internal/httpapi/journal_browser_integration_test.go:138`; M8 morto em 266a19e |
 | F3b, campos de conexão não discriminantes | :139–157 exigem todos os três cards e seus valores; M12–M15 mortos em a2326b2 |
 
-Não há tarefa de correção pendente. As lições L-007–L-009 mantêm o histórico das falhas resolvidas; esta revisão final não produziu sinal novo nem nova lição.
+Não há tarefa de correção pendente. As lições L-007–L-009 mantêm o histórico das falhas resolvidas. O delta T11 gerou uma lição sobre sincronização de logout em testes de navegador.
+
+## Delta T11: corrida de logout no E2E
+
+Commit revisado: 0bb53abb69e060d5c82ca4d3f72b68127d8d481f. O diff desde a validação só adiciona uma espera em `api/internal/httpapi/journal_browser_integration_test.go:108`, além das tarefas/documentação. Nenhuma asserção foi removida e nenhum timeout/retry foi alterado. O diff de produção desde 266a19e continua vazio.
+
+O teste anterior clicava Sair e chamava loginBrowser, que navega imediatamente. Essa navegação podia cancelar o POST/logout. `web/src/App.tsx:41` só altera o usuário/tela depois de await da API; observar o heading de entrada estabelece a conclusão antes da próxima navegação. A mesma sincronização já era usada em `api/internal/httpapi/browser_integration_test.go:157`.
+
+Falha original relatada no CI pull_request: run 39175731069/job 117817878530, enquanto o job push de 845b472 passou. A causa foi confirmada independentemente no export de 0bb53ab: um handler de Playwright para `**/api/auth/logout` retém a requisição por 500 ms antes de route.Continue(). Essa injeção existe somente no scratch.
+
+Comando real, em série, após build web: `go test -json -tags=integration -count=1 -run '^TestBrowserJournalAndIndividualRatings$' ./api/internal/httpapi`.
+
+| Execução independente | Resultado |
+| --- | --- |
+| Teste atual original, sem atraso | exit0, 1 PASS |
+| Teste atual com logout retido 500 ms | exit0, 1 PASS |
+| Mesmo atraso, removendo somente a nova espera no scratch | exit1, espera pelo heading de entrada excedeu 8000 ms; reproduziu a falha antiga |
+| Espera restaurada, mesmo atraso | exit0, 1 PASS |
+
+A comparação é discriminante: o atraso é idêntico e somente a espera muda. A falha esperada do controle não é uma falha da versão atual. A verificação remota do commit publicado continua a cargo do orquestrador; este relatório não declara CI remoto já concluído.
 
 ## Qualidade, limites e rastreabilidade
 
@@ -112,4 +133,4 @@ Os testes entregues cobrem rollback, concorrência, inválidos/ausentes, limites
 
 O spec não foi alterado pelo verificador. O estado "verified" dos requisitos agora é sustentado pela evidência independente final.
 
-Isolamento final da terceira revisão: porcelain real vazio antes e depois do sensor, antes de escrever este relatório. Nesta passagem, somente validation.md foi escrito na árvore real. Nenhum código ou teste real foi alterado pelo verificador. O scratch normalizou CRLF/LF ao restaurar o texto e foi integralmente descartado, junto com junction, ZIP e script auxiliar. O fechamento determinístico validate_state.py fase-2 foi executado após a escrita e aprovou o relatório PASS com evidência.
+Isolamento final: a árvore real estava limpa antes e após o probe de T11, antes da escrita deste relatório e da lição. Somente validation.md e os arquivos de lessons produzidos pelo script foram escritos nesta passagem. Nenhum código/teste real foi alterado. Scratch, junction, ZIP e script auxiliar descartados. validate_state.py fase-2 aprovou o relatório PASS.

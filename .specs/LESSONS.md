@@ -68,6 +68,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M8/AC21 (web) (+1 more)
 - last seen: 2026-10-18T23:09:37Z
 
+### L-010 - Aguarde a tela de entrada após logout antes de navegar ou autenticar outra pessoa nos testes de navegador.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `browser` · harmful: 0
+- features: fase-2
+- evidence: T11/CI39175731069 (browser)
+- last seen: 2026-10-18T23:25:57Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
