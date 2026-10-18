@@ -1,6 +1,85 @@
 # Validação da Fase 1
 
-**Result**: FAIL
+**Result**: PASS
+
+Revalidação independente de `feat/fase-0..9fbbd0f`: **13/13 ACs sustentados, 75 testes/subtestes aprovados e 11/11 mutantes mortos**. As correções `59b6058` e `9fbbd0f` fecharam as quatro lacunas da primeira rodada. O relatório anterior permanece ao final como histórico, sem representar o verdict atual.
+
+- Data: 18/10/2026.
+- Fonte de verdade: spec e tasks da Fase 1 em `9fbbd0f`.
+- Verificador: mesmo subagente independente, sem autoria das correções ou testes.
+- Escopo: implementação/testes reais somente leitura; sensor em cópia temporária dos arquivos rastreados de `9fbbd0f`.
+
+## Evidência atual por critério
+
+As linhas desta tabela referem-se a `9fbbd0f`. Evidências ainda válidas da primeira rodada foram reconferidas; as correções acrescentaram testes sem enfraquecer os anteriores.
+
+| AC | Resultado exigido e asserção decisiva | Resultado |
+| --- | --- | --- |
+| 1 | `internal/session/cipher_test.go:24/:28` exige envelope v1 aleatório/cifrado e plaintext igual; :32/:39/:46/:52/:57 exigem ErrInvalid para conexão, adulteração, versão, chave e truncamento. Persistência cifrada em `worker/store/store_integration_test.go:73`. M1 morto. | PASS |
+| 2 | `internal/session/cipher_test.go:65` exige erro seguro exato; `worker/cmd/worker/main_test.go:15` exige erro exato, saída vazia e interrupção antes de banco inacessível. | PASS |
+| 3 | `worker/netflix/normalize_test.go:25/:29` compara ID/título/chave, UTC e dia local; :37/:42 exige mesma chave após tradução/ordem. | PASS |
+| 4 | `worker/netflix/normalize_test.go:51/:56` exige parser+nil em inválido e aceita vazio; :69 preserva título indisponível, identidade/instante e MatchTitle vazio; :73 rejeita null. | PASS |
+| 5 | `worker/netflix/browser_integration_test.go:56/:109/:115/:124` exige páginas/eventos/estado e erros sem lote parcial. Novo :159 exige ID `1` com cookie R; :162 exige ErrLoginRequired e lote nil com cookie de outro perfil ou ausente. M3 e M8 mortos, comprovando perfil e aplicação do estado no Chromium. | PASS |
+| 6 | `worker/syncer/syncer_integration_test.go:149` exige count 0, status correto, last nil e erro sem segredo; `worker/syncer/syncer_test.go:18` confere códigos; `worker/store/store_integration_test.go:135` conserva último sucesso anterior. | PASS |
+| 7 | `worker/store/store_integration_test.go:86/:101/:114` exige ErrBusy concorrente, count 1 no replay e count 2 na revisita; pipeline :124/:141 exige count 1 por conexão com identidade sintética repetida. M2b morto. | PASS |
+| 8 | `worker/store/store_integration_test.go:126/:129/:135` exige erro, nenhum terceiro evento parcial e last_sync_at inalterado. M4b morto. | PASS |
+| 9 | `worker/tmdb/client_test.go:66/:69` e `worker/store/store_integration_test.go:162/:186` comparam metadados/episódio persistidos; novos testes TMDB :154 exigem ErrNotFound+TMDBID 0 em inexato; :158 exigem ErrUnavailable, EpisodeValid false e TMDBID 0 em ID/temporada/episódio divergentes; :170 exige título original e tipo corretos. M6/M7 mortos. | PASS |
+| 10 | `worker/tmdb/client_test.go:73/:77/:81` exige erro categorizado; novos :162/:166 exigem ambiguidade entre tipos ou match único movie exato. `worker/syncer/syncer_integration_test.go:124/:128/:141` conserva histórico, zero vínculo na falha e sucesso no retry; store :150 exige ambiguidade e retry futuro duráveis. M5 morto. | PASS |
+| 11 | `worker/syncer/serve_integration_test.go:129/:133` exige somente active/error e dois sucessos; :168/:175/:178 exige lock reutilizável após cancelamento, zero eventos e last nil; :219/:237 exige ao menos dois eventos/ciclos. `worker/syncer/syncer_test.go:30` exige próximo dia às 04:00 no fuso configurado. M9/M11 mortos. | PASS |
+| 12 | `worker/cmd/worker/main_integration_test.go:107` exige usuário e password_hash `!disabled`; :114/:120 exige perfil/usuário/status e sessão cifrada com confirmação CLI; :130/:133 exige replay manual único e último sucesso; :139 exige status/saída sem cookies; :146/:149/:156 exige reconexão preservada e outro perfil independente. Fronteira browser controlada :29/:38 exige perfil e sessão exatos. M10 morto. | PASS |
+| 13 | `deploy/Dockerfile.backend:22/:29/:31` fixa driver/browser e pwuser; `deploy/compose.yaml:69` exige migrations concluídas e :64/:65 injeta segredos backend. `.github/workflows/checks.yml:64/:67/:69` executa build/up, HTTP e Chromium. Rebuild/up do implementador exit 0; smoke independente da imagem atual: HTTP 200 e screenshot exit 0. | PASS |
+
+A decisão TMDB foi alinhada em `.specs/features/fase-1/spec.md:21`: tipo conhecido restringe busca; desconhecido pesquisa movie+tv e exige unicidade entre ambos. Os casos `unknown_unique` e `unknown_ambiguous` assertam valores/resultados opostos em `worker/tmdb/client_test.go:162/:166`. Nenhuma lacuna de precisão permanece neste ponto.
+
+## Gates da revalidação
+
+| Gate | Resultado |
+| --- | --- |
+| `rtk proxy go test ./...` | Exit 0 |
+| `rtk proxy go vet ./...` | Exit 0 |
+| `rtk proxy go test -tags=integration -count=1 -json ./...` | Exit 0; 75 testes/subtestes passaram, 0 falharam, 0 testes ignorados |
+| `rtk proxy go build ./...` | Exit 0 |
+| `rtk proxy npm --prefix web run build` | Exit 0, TypeScript e Vite |
+| Compose config com `--env-file NUL` e valores sintéticos | Exit 0 |
+| HTTP independente `/api/readyz` e `/` | 200 em ambos |
+| Screenshot independente no worker atual | `/app/playwright screenshot --browser chromium http://web/ /tmp/independent-round2.png`, exit 0 |
+| Build/up operacional reportado pelo implementador | Rebuild de `9fbbd0f` e Compose `up --wait`, exit 0; screenshot `/tmp/final-smoke.png`, exit 0 |
+
+Os três `skip` de pacote na integração são somente diretórios sem testes: api/cmd/api, api/cmd/migrate e worker/collector. Não houve teste desabilitado. Contagem de funções Test: 3 antes da feature, 16 na primeira rodada e **22 agora** (+19 sobre a base; +6 desde a primeira rodada). A integração usou exclusivamente `127.0.0.1:55432` e schemas próprios de teste. Não houve acesso ao banco pessoal.
+
+## Sensor da revalidação
+
+**11 mutações válidas, 11 mortas, zero sobreviventes e zero inválidas nesta rodada.** Cada tentativa restaura a cópia original antes da seguinte. Comando: `rtk proxy go test -tags=integration -count=1 -timeout=90s -json -run <seletor> <pacote>`. Seletor `TestBrowserFalcor` para M3, `TestBrowserUsesConnectionState` para M8 e `.` para os demais.
+
+| ID | Local em 9fbbd0f | Mutação | Teste que a matou, exit 1 |
+| --- | --- | --- | --- |
+| M1 | `internal/session/cipher.go:40` | Nonce zerado após geração | TestEnvelope |
+| M2b | `worker/store/store.go:86` | Relógio acrescentado à chave persistida | TestPersistence |
+| M3 | `worker/netflix/browser.go:250` | Aceitar GUID divergente na paginação | TestBrowserFalcor/perfil-na-paginacao |
+| M4b | `worker/store/store.go:90` | Commit por evento, permitindo lote parcial | TestPersistence |
+| M5 | `worker/tmdb/client.go:120` | Aceitar múltiplos candidatos | TestMatch/ambiguous, /multi_page e TestConservativeMatching/unknown_ambiguous |
+| M6 | `worker/tmdb/client.go:73` | Qualquer título é exato | TestConservativeMatching/inexact |
+| M7 | `worker/tmdb/client.go:180` | Aceitar ID/temporada/episódio incompatíveis | TestConservativeMatching/episode_mismatch, /episode_id e /episode_season |
+| M8 | `worker/netflix/browser.go:57` | Ignorar storage state recebido | TestBrowserUsesConnectionState/cookie-session-r |
+| M9 | `worker/syncer/syncer.go:159` | Remover execução do ciclo de coleta | TestServeStartupAndEligibility, TestServeCancellationReleasesLease e TestServeRepeatsCycle |
+| M10 | `worker/cmd/worker/main.go:98` | Rejeitar todo user-add válido | TestAdministrativeCLI |
+| M11 | `worker/syncer/syncer.go:162` | Retornar depois do ciclo inicial, sem recorrência | TestServeRepeatsCycle |
+
+Isolamento conferido por script: porcelain real vazio antes e depois, cópia temporária removida. Nenhum stash ou alteração em código/testes reais. Log estruturado: `%TEMP%/fase1-independent-results-round2.json`. O implementador foi avisado do término antes de atualizar a documentação final.
+
+## Fechamento e limites
+
+As correções são relacionadas aos ACs: novos testes de comportamento, injeção da fronteira browser na CLI e extração do loop de agenda para relógio controlado. O caminho padrão continua construindo Browser real e cron real. Nenhum teste anterior foi enfraquecido. A cobertura agora exige resultados persistidos e detecta todas as regressões injetadas, inclusive remoção da recorrência.
+
+As seis lições candidatas da primeira rodada permanecem no histórico. Esta rodada passou sem novo sinal: nenhuma lição foi criada nem promovida. O gate `validate_state.py fase-1` foi executado após este relatório e passou.
+
+TMDB real permanece pendente de token; somente o HTTP controlado foi validado. A coleta Netflix real anterior é evidência operacional documentada pelo implementador e não foi repetida pelo verificador. Nenhum `.env`, `.local`, sessão ou histórico pessoal foi lido. UAT humano não foi realizado nesta revisão.
+
+---
+
+## Histórico: primeira rodada em 61a1ddd
+
+Veredito histórico: FAIL
 
 Os gates passam, mas cinco mutações de comportamento sobreviveram. Quatro critérios têm lacunas de regressão automatizada: uso da sessão pelo navegador, rejeições TMDB, ciclo do worker e comandos CLI.
 

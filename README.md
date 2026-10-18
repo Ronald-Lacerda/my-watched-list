@@ -2,7 +2,7 @@
 
 Registro pessoal do que duas pessoas assistem, com notas individuais e favoritos do ano. A coleta será própria, começando pela Netflix. O TMDB será usado somente para metadados. Nome provisório.
 
-**Estado atual: Fase 1 em validação.** Coletor Netflix, sessão cifrada por perfil, normalização, sync manual/diário, idempotência e enriquecimento TMDB implementados. O app de notas e a autenticação web continuam na Fase 2. Consulte o [guia de operação Netflix](docs/netflix.md) para conectar os perfis e verificar o sync real.
+**Estado atual: Fase 1 implementada e validada.** Coletor Netflix, sessão cifrada por perfil, normalização, sync manual/diário e idempotência funcionando com os dois perfis reais. O enriquecimento TMDB passou nos testes controlados e aguarda o token do usuário para validação real. O app de notas e a autenticação web continuam na Fase 2. Consulte o [guia de operação Netflix](docs/netflix.md) para conectar os perfis e operar o sync.
 
 ## Estrutura
 
@@ -156,6 +156,8 @@ A tag `integration` exige `TEST_DATABASE_URL`; sua ausência falha explicitament
 
 O GitHub Actions executa testes Go com race detector, integração PostgreSQL, build web e smoke test da stack Docker. Os três jobs passaram na [validação inicial da Fase 0](https://github.com/Ronald-Lacerda/my-watched-list/actions/runs/39166847423). A revisão independente confirmou 16 critérios e detectou 10 falhas injetadas em cópia isolada; consulte `.specs/features/fase-0/validation.md`. Na Fase 1, o Docker Desktop local foi recuperado pela atualização de 4.68.0 para 4.95.0, usando o instalador oficial assinado. Engine 29.8.2, hello-world, build da stack, healthz/readyz e Chromium dentro do worker foram validados localmente. O volume da aplicação e os demais containers existentes foram preservados.
 
+A revisão independente da Fase 1 aprovou os 13 critérios e 75 testes/subtestes, com 11/11 falhas injetadas detectadas. Consulte [.specs/features/fase-1/validation.md](.specs/features/fase-1/validation.md). Os jobs Go, web e containers passaram no [CI da implementação](https://github.com/Ronald-Lacerda/my-watched-list/actions/runs/39170364886).
+
 ## VPS e HTTPS
 
 Quando houver domínio com DNS apontando para a VPS Linux e portas 80/443 livres, preencha `APP_DOMAIN` no `.env`, por exemplo `watched.seudominio.com`, sem protocolo nem caminho. O Caddy emitirá e renovará certificados, persistidos nos seus volumes. O frontend estático e o proxy HTTPS ficam no mesmo container.
@@ -181,7 +183,7 @@ O override substitui a porta local por 80/TCP e 443/TCP/UDP. O banco e a API con
 | Fase | Entrega | Estado |
 | --- | --- | --- |
 | 0 | Monorepo, processos, Compose, schema e README | Estrutura aprovada |
-| 1 | Netflix: sessão criptografada, API interna de histórico via Playwright, paginação, normalização, cron, idempotência e TMDB | Implementada; em validação |
+| 1 | Netflix: sessão criptografada, API interna de histórico via Playwright, paginação, normalização, cron, idempotência e TMDB | Validada; TMDB real aguarda token |
 | 2 | Auth para duas pessoas, timeline com filtros, notas, média do casal, pendentes e PWA | Planejada |
 | 3 | Melhores do ano, rankings individuais/do casal e estatísticas | Planejada |
 | 4 | Outros streamings e fallback assistido por LLM | Planejada |

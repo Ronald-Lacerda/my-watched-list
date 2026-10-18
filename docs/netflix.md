@@ -6,6 +6,8 @@ A CLI administrativa roda localmente, sem endpoints públicos. Cada conexão cor
 
 No `.env`, configure POSTGRES_PASSWORD, SESSION_ENCRYPTION_KEY (32 bytes em base64), TMDB_READ_ACCESS_TOKEN e, se necessário, SYNC_CRON/SYNC_TIMEZONE. O token TMDB é o **API Read Access Token**, enviado como Bearer. Nunca use variável VITE_* para esses segredos. Sem o token, a coleta persiste eventos e deixa metadados pendentes.
 
+Se ainda não tiver token, entre na sua conta TMDB pelo navegador de desktop, acesse Configurações → API e solicite acesso seguindo o [guia oficial](https://developer.themoviedb.org/docs/getting-started). Copie o **API Read Access Token** da seção API para `TMDB_READ_ACCESS_TOKEN` no `.env` local, sem enviá-lo pelo chat. Essa é a credencial Bearer descrita na [documentação de autenticação](https://developer.themoviedb.org/docs/authentication-application). Depois recrie o worker com Compose para aplicar o ambiente e execute sync para processar pendências.
+
 Para o login com navegador visível na máquina local, inicie o banco com a publicação opcional em loopback:
 
 ```sh
