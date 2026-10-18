@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -34,7 +35,11 @@ func run() error {
 		return errors.New("configuração de banco inválida")
 	}
 	defer pool.Close()
-	srv := &http.Server{Addr: cfg.HTTPAddr, Handler: httpapi.New(pool.Ping), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
+	handler, err := httpapi.NewApp(pool, httpapi.Options{Origins: strings.Split(os.Getenv("APP_ORIGINS"), ",")})
+	if err != nil {
+		return err
+	}
+	srv := &http.Server{Addr: cfg.HTTPAddr, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 15 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	done := make(chan error, 1)
 	go func() { done <- srv.ListenAndServe() }()
 	slog.Info("API iniciada", "endereço", cfg.HTTPAddr)

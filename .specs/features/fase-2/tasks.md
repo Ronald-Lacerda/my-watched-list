@@ -48,7 +48,7 @@ Where: api/internal/httpapi
 Depends on: T2
 Tests: integration HTTP postgres
 Gate: Full
-- [ ] Rotas de auth, cookie, Origin e JSON limitado; endpoints privados não vazam dados sem sessão. APP-03.
+- [x] Rotas de auth, cookie, Origin e JSON limitado; endpoints privados não vazam dados sem sessão. APP-03. Full/Quick/vet passaram. TestAuthHTTP verifica cookie HttpOnly/SameSite/Path/TTL, identidade, logout e 401 sem sessão/revogada/expirada; TestHTTPOriginAndJSON exige 403 em login/ativação/logout cross-origin, 400/415/413 na decodificação e 429/Retry-After no limite; TestHTTPSCookieAndOriginConfiguration exige Secure e rejeita configuração inválida.
 
 ### T4: leitura do histórico filtrado
 Where: api/internal/library

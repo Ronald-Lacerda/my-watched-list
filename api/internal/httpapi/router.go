@@ -11,6 +11,10 @@ import (
 )
 
 func New(ping func(context.Context) error) http.Handler {
+	return baseRouter(ping)
+}
+
+func baseRouter(ping func(context.Context) error) chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 	r.Get("/api/healthz", func(w http.ResponseWriter, r *http.Request) {
