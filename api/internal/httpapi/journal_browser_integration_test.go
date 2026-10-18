@@ -136,6 +136,25 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 	visible(t, p.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Nossas conexões"}))
 	visible(t, p.GetByText("Precisa de login", pw.PageGetByTextOptions{Exact: pw.Bool(true)}))
 	visible(t, p.GetByText("É preciso entrar novamente nesta conta para continuar recebendo o histórico.", pw.PageGetByTextOptions{Exact: pw.Bool(true)}))
+	if count, err := p.Locator(".connection-card").Count(); err != nil || count != 3 {
+		t.Fatal("conexões incompletas", count, err)
+	}
+	for _, expected := range []struct{ service, person, profile, status string }{
+		{"Netflix", "R", "R", "Conectada"},
+		{"Netflix", "Gabriela", "Gabriela", "Precisa de login"},
+		{"Prime Video", "R", "R", "Conectada"},
+	} {
+		card := p.Locator(".connection-card").Filter(pw.LocatorFilterOptions{Has: p.GetByRole("heading", pw.PageGetByRoleOptions{Name: expected.service, Exact: pw.Bool(true)})}).Filter(pw.LocatorFilterOptions{HasText: "Perfil " + expected.profile})
+		visible(t, card)
+		visible(t, card.GetByText("Perfil "+expected.profile, pw.LocatorGetByTextOptions{Exact: pw.Bool(true)}))
+		visible(t, card.GetByText(expected.status, pw.LocatorGetByTextOptions{Exact: pw.Bool(true)}))
+		if person, err := card.Locator(".connection-person strong").TextContent(); err != nil || person != expected.person {
+			t.Fatal("pessoa incorreta na conexão", person, err)
+		}
+		if sync, err := card.Locator(".connection-sync strong").TextContent(); err != nil || !strings.Contains(sync, "18/10/2026") || !strings.Contains(sync, "09:00") {
+			t.Fatal("último sync não exibido em São Paulo", sync, err)
+		}
+	}
 	if txt, _ := p.Locator("body").TextContent(); strings.Contains(txt, "DO-NOT-EXPOSE") {
 		t.Fatal("sessão vazou na interface")
 	}

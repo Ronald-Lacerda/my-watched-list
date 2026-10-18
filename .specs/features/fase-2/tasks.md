@@ -24,7 +24,7 @@ Build: Quick + Full + `go build ./...`, `npm --prefix web run build`, gofmt e Co
 Oito entregas coesas, implementadas em sequência local. O usuário já autorizou a implementação e as decisões simples; ferramentas normais do projeto são mantidas. Verifier independente obrigatório após o último commit.
 
 ```text
-T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9
+T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9 -> T10
 ```
 
 ## Task Breakdown
@@ -91,6 +91,13 @@ Depends on: T8
 Tests: integration HTTP postgres e browser
 Gate: Full
 - [x] Corrigir validação de corpos opcionais em logout/DELETE e reforçar orientação needs_login. AC9/14/21. TestOptionalMutationBodies: :50 exige 400 para sintaxe, ator, null, array e objeto extra; 415 para MIME e 413 para excesso, tanto com ContentLength conhecido quanto chunked/-1. :53 exige sessão ainda válida e :58 exige count=2/soma=11 após rejeições. :77 aceita objeto vazio válido. TestBrowserJournalAndIndividualRatings: :138 exige a orientação de entrar novamente para continuar a coleta. Os testes falharam antes das correções; a extensão também revelou null aceito como corpo de DELETE, agora rejeitado pelo decoder que exige objeto. Full/Quick/vet/build aprovados após correção, sem remover/enfraquecer testes. Revalidação independente será registrada no relatório antes de liberar o PR.
+
+### T10: conferir os campos das conexões no navegador (F3b)
+Where: api/internal/httpapi
+Depends on: T9
+Tests: integration browser
+Gate: Full
+- [x] AC21: o browser agora exige três cartões, serviço e perfil identificáveis, pessoa correta, estado e último sync em São Paulo (18/10/2026, 09:00) nas três conexões sintéticas, além da orientação needs_login existente. TestBrowserJournalAndIndividualRatings confere a conjunção em :139–157; a revisão anterior demonstrou mutante que substituía o perfil passando pelo teste. Full/Quick/vet/build aprovados; nenhum código de produção mudou nesta correção. Revalidação independente do mutante de perfil pendente antes de liberar o PR.
 
 ## Conferência estrutural
 

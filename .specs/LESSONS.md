@@ -65,8 +65,8 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-009 - Asserte os campos e a orientação de reconexão renderizados no card, além do rótulo de estado.
 - signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
 - features: fase-2
-- evidence: M8/AC21 (web)
-- last seen: 2026-10-18T23:02:52Z
+- evidence: M8/AC21 (web) (+1 more)
+- last seen: 2026-10-18T23:09:37Z
 
 ## Quarantined (failed when applied - ignore)
 
