@@ -49,6 +49,9 @@ func NewApp(pool *pgxpool.Pool, options Options) (http.Handler, error) {
 	r.Post("/api/auth/activate", a.activate)
 	r.Post("/api/auth/logout", a.logout)
 	r.With(a.requireUser).Get("/api/auth/me", func(w http.ResponseWriter, r *http.Request) { reply(w, 200, map[string]any{"user": currentUser(r)}) })
+	r.With(a.requireUser).Get("/api/filters", a.filters)
+	r.With(a.requireUser).Get("/api/history", a.history)
+	r.With(a.requireUser).Get("/api/connections", a.connections)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		apiError(w, 404, "not_found", "Não encontramos esta página.")
 	})

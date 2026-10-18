@@ -55,7 +55,7 @@ Where: api/internal/library
 Depends on: T3
 Tests: integration HTTP postgres
 Gate: Full
-- [ ] Histórico, filtros e conexões com paginação estável, período inclusivo e payload sanitizado. APP-04.
+- [x] Histórico, filtros e conexões com paginação estável, período inclusivo e payload sanitizado. APP-04. Full/Quick/vet passaram. TestHistoryFiltersAndPagination exige seis eventos, filtros combinados, limites inclusivos, vazio e seis páginas sem repetição/perda em datas iguais; query inválida exige 400. TestReadEndpointsPrivacy exige 401 sem sessão, nomes/serviços/needs_login corretos e ausência de ciphertext, hashes e e-mails em todos os endpoints de leitura.
 
 ### T5: notas individuais por obra
 Where: api/internal/library
