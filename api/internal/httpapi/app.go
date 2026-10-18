@@ -52,6 +52,8 @@ func NewApp(pool *pgxpool.Pool, options Options) (http.Handler, error) {
 	r.With(a.requireUser).Get("/api/filters", a.filters)
 	r.With(a.requireUser).Get("/api/history", a.history)
 	r.With(a.requireUser).Get("/api/connections", a.connections)
+	r.With(a.requireUser).Put("/api/events/{id}/rating", a.rating)
+	r.With(a.requireUser).Delete("/api/events/{id}/rating", a.rating)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		apiError(w, 404, "not_found", "Não encontramos esta página.")
 	})

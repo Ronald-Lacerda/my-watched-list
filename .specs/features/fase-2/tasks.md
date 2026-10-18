@@ -62,7 +62,7 @@ Where: api/internal/library
 Depends on: T4
 Tests: integration HTTP postgres
 Gate: Full
-- [ ] Upsert/delete por pessoa autenticada, validação, zero, média e pendentes individuais sem TMDB. APP-05.
+- [x] Upsert/delete por pessoa autenticada, validação, zero, média e pendentes individuais sem TMDB. APP-05. Full/Quick/vet aprovados. TestIndividualRatingsAndPending exige média 5 com 0/10, média 9.25 após editar, nota da parceira intacta, uma nota por série e pendentes pessoais. TestRatingValidationAndAuthorization exige 400/401/403/404/409 e preservação da nota 6; TestRatingConcurrentUpsertAndLegacy verifica concorrência e compatibilidade sem ressuscitar nota removida. TestRatingRollbackOnFailure provoca erro depois do upsert e exige rollback integral e 500 sanitizado. TestRatingBounds cobre 0/0.5/10, NaN/Inf e comentários Unicode nos limites.
 
 ### T6: entrada e shell do app
 Where: web/src
