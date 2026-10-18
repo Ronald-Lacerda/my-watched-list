@@ -25,9 +25,10 @@ type Batch struct {
 	State  []byte
 }
 type Browser struct {
-	Zone     *time.Location
-	MaxPages int
-	entryURL string // sobrescrita somente pelos testes no mesmo pacote
+	Zone         *time.Location
+	MaxPages     int
+	LoginChannel string
+	entryURL     string // sobrescrita somente pelos testes no mesmo pacote
 }
 
 func (b Browser) entry() string {
@@ -37,12 +38,16 @@ func (b Browser) entry() string {
 	return "https://www.netflix.com/viewingactivity"
 }
 
-func openBrowser(ctx context.Context, state []byte, headed bool) (pw.BrowserContext, pw.Page, func(), error) {
+func openBrowser(ctx context.Context, state []byte, headed bool, channel string) (pw.BrowserContext, pw.Page, func(), error) {
 	driver, err := pw.Run()
 	if err != nil {
 		return nil, nil, nil, ErrBrowser
 	}
-	browser, err := driver.Chromium.Launch(pw.BrowserTypeLaunchOptions{Headless: pw.Bool(!headed)})
+	opts := pw.BrowserTypeLaunchOptions{Headless: pw.Bool(!headed)}
+	if channel != "" {
+		opts.Channel = pw.String(channel)
+	}
+	browser, err := driver.Chromium.Launch(opts)
 	if err != nil {
 		_ = driver.Stop()
 		return nil, nil, nil, ErrBrowser
@@ -99,12 +104,15 @@ func currentProfile(page pw.Page) (Profile, error) {
 // Login abre uma janela isolada. O operador autentica e escolhe seu perfil;
 // confirm apenas aguarda a confirmação local, nunca recebe senha/cookies.
 func (b Browser) Login(ctx context.Context, expectedName string, confirm func() error) (Profile, []byte, error) {
-	bc, page, close, err := openBrowser(ctx, nil, true)
+	bc, page, close, err := openBrowser(ctx, nil, true, b.LoginChannel)
 	if err != nil {
 		return Profile{}, nil, err
 	}
 	defer close()
 	if _, err = page.Goto("https://www.netflix.com/browse"); err != nil {
+		if code := regexp.MustCompile(`net::ERR_[A-Z_]+`).FindString(err.Error()); code != "" {
+			return Profile{}, nil, errors.New("navegação Netflix: " + code)
+		}
 		return Profile{}, nil, ErrBrowser
 	}
 	if err = confirm(); err != nil {
@@ -119,7 +127,7 @@ func (b Browser) Login(ctx context.Context, expectedName string, confirm func() 
 }
 
 func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string) (Batch, error) {
-	bc, page, close, err := openBrowser(ctx, state, false)
+	bc, page, close, err := openBrowser(ctx, state, false, "")
 	if err != nil {
 		return Batch{}, err
 	}

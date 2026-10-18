@@ -68,7 +68,7 @@ Where: worker/cmd/worker
 Depends on: T5
 Tests: unit e integração
 Gate: Full
-- [ ] Bootstrap, login, status, sync e agenda com contexto; NFLX-06.
+- [x] Bootstrap, login, status, sync e agenda com contexto; NFLX-06. TestPipeline aprovado em PostgreSQL: normalizador → cifragem → sync → TMDB/vínculo, replay, falha TMDB seguida de retry, expiração, parser e erro de driver sem segredo. TestDailySchedule confere 04:00 e TestInvalidKeyStopsBeforeNetwork exige falha antes da rede. Suite integration e vet aprovados. Login real em andamento na janela local Chrome.
 
 ### T7: ambiente e operação
 Where: deploy
