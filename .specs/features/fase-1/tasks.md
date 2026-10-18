@@ -88,3 +88,7 @@ Gate: Build
 Os testes novos verificam AC 3–6 e os comandos de smoke verificam AC 13; nenhum teste foi removido ou ignorado. A normalização de título em branco mudou após confirmação do usuário, preservando teste de campo ausente e acrescentando teste de null. Verificação independente é o próximo gate.
 
 Dependências do diagrama coincidem com cada Depends on. Todos os componentes possuem testes na mesma tarefa. Usuário autorizou implementação, testes e PR; decisões simples seguem os padrões documentados, sem nova aprovação de ferramentas.
+
+## Correções da revisão independente
+
+- [x] F1, AC 5/9–10: testes Chromium exigem cookie sintético por conexão e rejeitam estado ausente ou de outro perfil. Testes TMDB rejeitam nome inexato, ID/temporada/episódio incompatíveis e ambiguidade entre mídias; aceitam título original e match único entre tipos. A célula de decisão da spec foi alinhada ao comportamento já documentado para tipo desconhecido. Gate completo de integração e vet aprovado; nova rodada independente pendente.

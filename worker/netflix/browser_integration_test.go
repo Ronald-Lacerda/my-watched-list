@@ -4,10 +4,12 @@ package netflix
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -121,6 +123,44 @@ func TestBrowserFalcor(t *testing.T) {
 			}
 			if !errors.Is(err, want) || batch.Events != nil {
 				t.Fatalf("lote parcial aceito no modo %s: %+v %v", mode, batch, err)
+			}
+		})
+	}
+}
+
+// AC 5: o navegador precisa aplicar o estado fornecido, sem herdar outra sessão.
+func TestBrowserUsesConnectionState(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/login" {
+			fmt.Fprint(w, "login")
+			return
+		}
+		cookie, err := r.Cookie("synthetic-session")
+		if err != nil || (cookie.Value != "session-r" && cookie.Value != "session-g") {
+			http.Redirect(w, r, "/login", 302)
+			return
+		}
+		guid := "perfil-r"
+		if cookie.Value == "session-g" {
+			guid = "perfil-g"
+		}
+		fmt.Fprintf(w, `<script>window.netflix={reactContext:{models:{vaModel:{data:{vhSize:1,profileInfo:{guid:%q,profileName:"Sintético"},viewedItems:[{movieID:1,title:"Teste",date:1725233400000}]}}}}};</script>`, guid)
+	}))
+	defer server.Close()
+	u, _ := url.Parse(server.URL)
+	for _, value := range []string{"session-r", "session-g", ""} {
+		t.Run("cookie-"+value, func(t *testing.T) {
+			var state []byte
+			if value != "" {
+				state, _ = json.Marshal(map[string]any{"cookies": []any{map[string]any{"name": "synthetic-session", "value": value, "domain": u.Hostname(), "path": "/", "expires": -1, "httpOnly": true, "secure": false, "sameSite": "Lax"}}, "origins": []any{}})
+			}
+			batch, err := (Browser{entryURL: server.URL + "/viewingactivity", Zone: time.UTC}).Fetch(context.Background(), state, "perfil-r")
+			if value == "session-r" {
+				if err != nil || len(batch.Events) != 1 || batch.Events[0].SourceTitleID != "1" {
+					t.Fatalf("sessão da conexão não aplicada: %+v %v", batch, err)
+				}
+			} else if !errors.Is(err, collector.ErrLoginRequired) || batch.Events != nil {
+				t.Fatalf("sessão ausente/de outro perfil aceita: %+v %v", batch, err)
 			}
 		})
 	}

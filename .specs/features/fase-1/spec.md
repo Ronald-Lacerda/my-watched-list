@@ -18,7 +18,7 @@ App de notas, autenticação web, rankings, outros streamings e execução do fa
 | Formato | Adaptador estrito para viewedItems; fixture sintética identificada. Título explicitamente em branco vira “Título indisponível na Netflix”, com MatchTitle vazio | Decisão do usuário após ocorrência real; preservar ID/data sem busca TMDB inventada |
 | Datas | Epoch em milissegundos preserva instante e dia em America/Sao_Paulo | Datas inválidas falham; sem inventar horário |
 | Chave de evento | movieID + instante UTC | Independente de título traduzido e paginação; limita distinção ao que a fonte informa |
-| TMDB | Somente correspondência exata única em título/título original e tipo conhecido | Ambiguidade mantém evento pendente sem associação incorreta |
+| TMDB | Tipo conhecido restringe a busca; tipo desconhecido busca filme e série. Exigir correspondência exata única em título/título original entre todos os tipos pesquisados | Ambiguidade inclusive entre mídias mantém evento pendente; segue decisão já documentada em docs/netflix.md |
 | Agenda | 04:00 America/Sao_Paulo, execução inicial e diária | Recuperar pendências sem fila extra |
 | Bootstrap | CLI local; usuários sem acesso web até Fase 2 | Não criar endpoints administrativos públicos |
 

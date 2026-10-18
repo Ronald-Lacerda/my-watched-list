@@ -85,3 +85,92 @@ func TestMatch(t *testing.T) {
 		})
 	}
 }
+
+// AC 9–10: um candidato aproximado ou episódio incompatível nunca é associado.
+func TestConservativeMatching(t *testing.T) {
+	for _, mode := range []string{"inexact", "episode_mismatch", "episode_id", "episode_season", "unknown_ambiguous", "unknown_unique", "unavailable_title", "movie_original", "tv_original"} {
+		t.Run(mode, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if mode == "unavailable_title" {
+					t.Error("título indisponível não deve consultar TMDB")
+				}
+				if strings.HasPrefix(r.URL.Path, "/search/") {
+					if mode == "unknown_unique" && r.URL.Path == "/search/tv" {
+						fmt.Fprint(w, `{"results":[],"total_pages":1}`)
+					} else if mode == "inexact" {
+						fmt.Fprint(w, `{"results":[{"id":1,"title":"Teste parecido"}],"total_pages":1}`)
+					} else if strings.HasSuffix(mode, "_original") {
+						fmt.Fprint(w, `{"results":[{"id":1,"title":"Tradução","name":"Tradução","original_title":"Teste","original_name":"Teste"}],"total_pages":1}`)
+					} else {
+						// Mesmo ID numérico nas duas mídias ainda representa dois títulos.
+						fmt.Fprint(w, `{"results":[{"id":1,"title":"Teste","name":"Teste"}],"total_pages":1}`)
+					}
+					return
+				}
+				if mode == "inexact" || mode == "unknown_ambiguous" {
+					t.Error("candidato não resolvido não deve buscar detalhes")
+				}
+				if strings.Contains(r.URL.Path, "/episode/") {
+					id, season, episode := 8, 1, 2
+					switch mode {
+					case "episode_id":
+						id = 0
+					case "episode_season":
+						season = 2
+					default:
+						episode = 3
+					}
+					fmt.Fprintf(w, `{"id":%d,"season_number":%d,"episode_number":%d,"name":"Outro episódio"}`, id, season, episode)
+					return
+				}
+				if strings.HasSuffix(mode, "_original") {
+					fmt.Fprint(w, `{"id":1,"title":"Tradução","name":"Tradução","original_title":"Teste","original_name":"Teste"}`)
+					return
+				}
+				fmt.Fprint(w, `{"id":1,"title":"Teste","name":"Teste"}`)
+			}))
+			defer srv.Close()
+			c := New("synthetic-token")
+			c.baseURL = srv.URL
+			e := collector.Event{MatchTitle: "Teste", MediaType: "movie"}
+			if strings.HasPrefix(mode, "episode_") {
+				e.MediaType = "tv"
+				season, episode := 1, 2
+				e.SeasonNumber, e.EpisodeNumber = &season, &episode
+			}
+			if mode == "tv_original" {
+				e.MediaType = "tv"
+			}
+			if strings.HasPrefix(mode, "unknown_") {
+				e.MediaType = ""
+			}
+			if mode == "unavailable_title" {
+				e.MatchTitle = ""
+			}
+			title, err := c.Match(context.Background(), e)
+			switch mode {
+			case "inexact", "unavailable_title":
+				if !errors.Is(err, ErrNotFound) || title.TMDBID != 0 {
+					t.Fatalf("associação indevida: %+v %v", title, err)
+				}
+			case "episode_mismatch", "episode_id", "episode_season":
+				if !errors.Is(err, ErrUnavailable) || title.EpisodeValid || title.TMDBID != 0 {
+					t.Fatalf("episódio incompatível aceito: %+v %v", title, err)
+				}
+			case "unknown_ambiguous":
+				if !errors.Is(err, ErrAmbiguous) || title.TMDBID != 0 {
+					t.Fatalf("ambiguidade entre mídias ignorada: %+v %v", title, err)
+				}
+			case "unknown_unique":
+				if err != nil || title.TMDBID != 1 || title.MediaType != "movie" || title.Name != "Teste" {
+					t.Fatalf("match único entre mídias: %+v %v", title, err)
+				}
+			case "movie_original", "tv_original":
+				if err != nil || title.TMDBID != 1 || title.Name != "Tradução" || title.Original != "Teste" || title.MediaType != e.MediaType {
+					t.Fatalf("título original não reconhecido: %+v %v", title, err)
+				}
+			}
+		})
+	}
+}
