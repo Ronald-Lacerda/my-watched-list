@@ -65,7 +65,7 @@ Como desenvolvedor, quero compilar o frontend e executar a base via Compose.
 | --- | --- | --- |
 | BASE-01 | Processos e contratos | verified |
 | BASE-02 | Persistência | verified |
-| BASE-03 | Web e deploy | pending |
+| BASE-03 | Web e deploy | verified |
 
 ## Plano de execução
 
@@ -79,3 +79,4 @@ As dimensões presentes são integridade, replay, falha do banco, encerramento e
 
 - Entrega 1 concluída: go test ./..., go vet ./... e go build ./... aprovados. BASE-01.1–3: api/internal/httpapi/router_test.go compara status HTTP e corpo JSON exatos nos três cenários. BASE-01.4: internal/config/config_test.go exige o erro exato de configuração. BASE-01.5: worker/cmd/worker/main.go bloqueia no contexto, sem chamadas de coleta; revisão de código. Os testes de configuração e HTTP se limitam a BASE-01.
 - Entrega 2 concluída: TestSchema aprovado em PostgreSQL 17.5 temporário. BASE-02.1/6: migrations up/down/up e verificação das seis tabelas; BASE-02.2/5: replay, revisita e campos sem enriquecimento; BASE-02.3: sete limites de nota; BASE-02.4: vínculos de pessoa e episódio rejeitados. Build e vet aprovados. Docker Desktop indisponível por erro local no socket dockerInference; PostgreSQL temporário usado para não alterar a instalação do usuário.
+- Entrega 3 concluída: build TypeScript/Vite aprovado, Compose local/produção/testes validado e Caddy validado. Smoke test nativo aprovado para API, prontidão PostgreSQL, proxy Caddy, arquivos estáticos, fallback SPA e worker sem coleta. Navegador confirmou página em português e status disponível. Dockerfiles e execução da stack serão exercitados também no GitHub Actions; execução local dos containers impedida pelo Docker Desktop. Nenhum requisito de runtime Docker é declarado testado localmente.

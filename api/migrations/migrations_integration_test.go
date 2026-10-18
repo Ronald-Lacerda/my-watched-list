@@ -72,6 +72,11 @@ func TestSchema(t *testing.T) {
 		if err := tx.QueryRow("SELECT count(*) FROM watch_events").Scan(&count); err != nil || count != 2 {
 			t.Fatalf("eventos = %d, esperado 2: %v", count, err)
 		}
+		for _, key := range []string{"evento-1", "evento-2"} {
+			if err := tx.QueryRow("SELECT count(*) FROM watch_events WHERE source_event_key=$1", key).Scan(&count); err != nil || count != 1 {
+				t.Fatalf("chave %s: %d eventos, esperado 1: %v", key, count, err)
+			}
+		}
 		var title string
 		var day string
 		var titleID, episodeID, instant sql.NullString

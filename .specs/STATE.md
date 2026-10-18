@@ -11,4 +11,4 @@
 
 ## Handoff
 
-Fase 0 em execução. Pasta inicialmente vazia, sem remoto Git. Não publicar nem implantar na VPS nesta etapa.
+Fase 0 implementada na branch feat/fase-0, aguardando revisão independente e execução do CI. Usuário autorizou criar repositório GitHub novo; padrão escolhido: privado, my-watched-list. Não implantar na VPS nem iniciar Fase 1 nesta entrega. Docker Desktop local falha no socket dockerInference; testes de banco e smoke test executados com PostgreSQL/Caddy nativos temporários.
