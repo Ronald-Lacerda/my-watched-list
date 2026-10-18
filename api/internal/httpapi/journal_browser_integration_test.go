@@ -135,6 +135,7 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 	click(t, p, "Conexões")
 	visible(t, p.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Nossas conexões"}))
 	visible(t, p.GetByText("Precisa de login", pw.PageGetByTextOptions{Exact: pw.Bool(true)}))
+	visible(t, p.GetByText("É preciso entrar novamente nesta conta para continuar recebendo o histórico.", pw.PageGetByTextOptions{Exact: pw.Bool(true)}))
 	if txt, _ := p.Locator("body").TextContent(); strings.Contains(txt, "DO-NOT-EXPOSE") {
 		t.Fatal("sessão vazou na interface")
 	}

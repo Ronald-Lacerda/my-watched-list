@@ -34,7 +34,7 @@ func (a *app) rating(w http.ResponseWriter, r *http.Request) {
 		}
 		result, err = store.SaveRating(r.Context(), currentUser(r).ID, id, *body.Score, body.Comment)
 	} else {
-		if r.ContentLength > 0 {
+		if r.ContentLength != 0 {
 			var empty struct{}
 			if !readJSON(w, r, &empty) {
 				return

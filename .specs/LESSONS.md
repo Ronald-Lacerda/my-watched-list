@@ -50,6 +50,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: spec.md:20 (worker/tmdb)
 - last seen: 2026-10-18T21:58:38Z
 
+### L-007 - Valide corpos opcionais de mutações com os mesmos limites e erros JSON dos demais endpoints.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `httpapi` · harmful: 0
+- features: fase-2
+- evidence: AC9/F1 (httpapi)
+- last seen: 2026-10-18T23:02:51Z
+
+### L-008 - Leia corpos de DELETE até EOF com limite, sem usar ContentLength positivo como prova de presença.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `httpapi` · harmful: 0
+- features: fase-2
+- evidence: AC14/F2 (httpapi)
+- last seen: 2026-10-18T23:02:51Z
+
+### L-009 - Asserte os campos e a orientação de reconexão renderizados no card, além do rótulo de estado.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web` · harmful: 0
+- features: fase-2
+- evidence: M8/AC21 (web)
+- last seen: 2026-10-18T23:02:52Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

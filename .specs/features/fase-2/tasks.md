@@ -24,7 +24,7 @@ Build: Quick + Full + `go build ./...`, `npm --prefix web run build`, gofmt e Co
 Oito entregas coesas, implementadas em sequência local. O usuário já autorizou a implementação e as decisões simples; ferramentas normais do projeto são mantidas. Verifier independente obrigatório após o último commit.
 
 ```text
-T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8
+T1 -> T2 -> T3 -> T4 -> T5 -> T6 -> T7 -> T8 -> T9
 ```
 
 ## Task Breakdown
@@ -83,7 +83,14 @@ Where: deploy
 Depends on: T7
 Tests: integration browser e smoke
 Gate: Build
-- [x] Manifest/SW/ícones, offline sem dados privados, CI, Compose e guia de primeiro acesso. APP-08. Build web e Full/Quick/vet/build Go passaram. TestBrowserPWAOfflinePrivacy exige manifest standalone, ícones 192/512, cache exclusivo do shell, ausência de notas gravadas offline, shell após reload sem histórico privado e recuperação online. O teste revelou redirecionamento de index.html no servidor de teste e sinal onLine impreciso após reload: fallback público normaliza a resposta e falha real de rede também atualiza o aviso. Compose build/up e configurações local/HTTPS passaram; readyz=200, histórico sem sessão=401 e Chromium no worker renderizou o app. Backup PostgreSQL local de 116976 bytes validado por pg_restore; migration/startup preservaram R=557 e Gabriela=691 eventos únicos, todos com source_work_id preenchido. Convites individuais locais gerados e primeiro acesso de R aberto sem senha padrão ou token no chat. docs/app.md descreve uso, operação e rollback protegido. PR separado será aberto após este commit e só ficará pronto após revisão independente e CI.
+- [x] Manifest/SW/ícones, offline sem dados privados, CI, Compose e guia de primeiro acesso. APP-08. Build web e Full/Quick/vet/build Go passaram. TestBrowserPWAOfflinePrivacy exige manifest standalone, ícones 192/512, cache exclusivo do shell, ausência de notas gravadas offline, shell após reload sem histórico privado e recuperação online. O teste revelou redirecionamento de index.html no servidor de teste e sinal onLine impreciso após reload: fallback público normaliza a resposta e falha real de rede também atualiza o aviso. Compose build/up e configurações local/HTTPS passaram; readyz=200, histórico sem sessão=401 e Chromium no worker renderizou o app. Backup PostgreSQL local de 116976 bytes validado por pg_restore; migration/startup preservaram R=557 e Gabriela=691 eventos únicos, todos com source_work_id preenchido. Convites individuais locais gerados sem senha padrão ou token no chat. A aba antiga foi atualizada para o login da Fase 2; abertura automática do HTML do convite foi bloqueada pela política file:// do navegador integrado, e o usuário recebeu instrução para abrir o arquivo pelo Explorador/Chrome. docs/app.md descreve uso, operação e rollback protegido. PR separado será aberto após este commit e só ficará pronto após revisão independente e CI.
+
+### T9: fechar lacunas da revisão independente (F1)
+Where: api/internal/httpapi
+Depends on: T8
+Tests: integration HTTP postgres e browser
+Gate: Full
+- [x] Corrigir validação de corpos opcionais em logout/DELETE e reforçar orientação needs_login. AC9/14/21. TestOptionalMutationBodies: :50 exige 400 para sintaxe, ator, null, array e objeto extra; 415 para MIME e 413 para excesso, tanto com ContentLength conhecido quanto chunked/-1. :53 exige sessão ainda válida e :58 exige count=2/soma=11 após rejeições. :77 aceita objeto vazio válido. TestBrowserJournalAndIndividualRatings: :138 exige a orientação de entrar novamente para continuar a coleta. Os testes falharam antes das correções; a extensão também revelou null aceito como corpo de DELETE, agora rejeitado pelo decoder que exige objeto. Full/Quick/vet/build aprovados após correção, sem remover/enfraquecer testes. Revalidação independente será registrada no relatório antes de liberar o PR.
 
 ## Conferência estrutural
 

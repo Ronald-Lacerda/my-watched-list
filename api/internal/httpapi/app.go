@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -98,8 +99,17 @@ func readJSON(w http.ResponseWriter, r *http.Request, out any) bool {
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 64<<10)
 	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	if err = decoder.Decode(out); err == nil {
+	var document json.RawMessage
+	if err = decoder.Decode(&document); err == nil {
+		if len(document) == 0 || document[0] != '{' {
+			err = errors.New("objeto JSON obrigatório")
+		} else {
+			object := json.NewDecoder(bytes.NewReader(document))
+			object.DisallowUnknownFields()
+			err = object.Decode(out)
+		}
+	}
+	if err == nil {
 		var extra any
 		if e := decoder.Decode(&extra); e != io.EOF {
 			if e == nil {
@@ -198,6 +208,12 @@ func (a *app) activate(w http.ResponseWriter, r *http.Request) {
 func (a *app) logout(w http.ResponseWriter, r *http.Request) {
 	if !a.origin(w, r) {
 		return
+	}
+	if r.ContentLength != 0 {
+		var empty struct{}
+		if !readJSON(w, r, &empty) {
+			return
+		}
 	}
 	if err := a.auth.Logout(r.Context(), cookieToken(r)); err != nil {
 		a.authError(w, err)
