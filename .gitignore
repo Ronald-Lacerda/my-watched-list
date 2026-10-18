@@ -13,5 +13,6 @@ sessions/
 storage-state*.json
 playwright/.auth/
 graphify-out/
+.local/
 .DS_Store
 Thumbs.db
