@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 7,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "surviving_mutant::teste a rejeicao de candidatos tmdb com nomes inexatos alem dos matches exatos",
+      "text": "Teste a rejeição de candidatos TMDB com nomes inexatos, além dos matches exatos.",
+      "signal": "surviving_mutant",
+      "scope": "worker/tmdb",
+      "status": "candidate",
+      "features": [
+        "fase-1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M6 (worker/tmdb)"
+      ],
+      "created": "2026-10-18T21:58:34Z",
+      "last_seen": "2026-10-18T21:58:34Z"
+    },
+    {
+      "id": "L-002",
+      "key": "surviving_mutant::exija respostas de episodio com id positivo e temporada e numero iguais aos solicitados nos testes tmdb",
+      "text": "Exija respostas de episódio com ID positivo e temporada e número iguais aos solicitados nos testes TMDB.",
+      "signal": "surviving_mutant",
+      "scope": "worker/tmdb",
+      "status": "candidate",
+      "features": [
+        "fase-1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M7 (worker/tmdb)"
+      ],
+      "created": "2026-10-18T21:58:35Z",
+      "last_seen": "2026-10-18T21:58:35Z"
+    },
+    {
+      "id": "L-003",
+      "key": "surviving_mutant::nos testes chromium faca o servidor exigir o storage state recebido e confira o isolamento entre conexoes",
+      "text": "Nos testes Chromium, faça o servidor exigir o storage state recebido e confira o isolamento entre conexões.",
+      "signal": "surviving_mutant",
+      "scope": "worker/netflix",
+      "status": "candidate",
+      "features": [
+        "fase-1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M8 (worker/netflix)"
+      ],
+      "created": "2026-10-18T21:58:36Z",
+      "last_seen": "2026-10-18T21:58:36Z"
+    },
+    {
+      "id": "L-004",
+      "key": "surviving_mutant::teste a execucao inicial e recorrente do worker e seu encerramento por contexto alem do calculo do cron",
+      "text": "Teste a execução inicial e recorrente do worker e seu encerramento por contexto, além do cálculo do cron.",
+      "signal": "surviving_mutant",
+      "scope": "worker/syncer",
+      "status": "candidate",
+      "features": [
+        "fase-1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M9 (worker/syncer)"
+      ],
+      "created": "2026-10-18T21:58:36Z",
+      "last_seen": "2026-10-18T21:58:36Z"
+    },
+    {
+      "id": "L-005",
+      "key": "surviving_mutant::teste o despacho e as saidas dos comandos cli validos alem da validacao de configuracao",
+      "text": "Teste o despacho e as saídas dos comandos CLI válidos, além da validação de configuração.",
+      "signal": "surviving_mutant",
+      "scope": "worker/cmd/worker",
+      "status": "candidate",
+      "features": [
+        "fase-1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M10 (worker/cmd/worker)"
+      ],
+      "created": "2026-10-18T21:58:37Z",
+      "last_seen": "2026-10-18T21:58:37Z"
+    },
+    {
+      "id": "L-006",
+      "key": "spec_precision_gap::defina explicitamente a decisao de associacao tmdb quando o tipo de midia de origem e desconhecido",
+      "text": "Defina explicitamente a decisão de associação TMDB quando o tipo de mídia de origem é desconhecido.",
+      "signal": "spec_precision_gap",
+      "scope": "worker/tmdb",
+      "status": "candidate",
+      "features": [
+        "fase-1"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "spec.md:20 (worker/tmdb)"
+      ],
+      "created": "2026-10-18T21:58:38Z",
+      "last_seen": "2026-10-18T21:58:38Z"
+    }
+  ]
+}
