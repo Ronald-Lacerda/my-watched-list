@@ -34,7 +34,7 @@ Where: api/migrations
 Depends on: none
 Tests: unit e integration postgres
 Gate: Full
-- [ ] Migration aditiva e source_work_id no coletor; preservar eventos/notas e identidade de série no replay. APP-01.
+- [x] Migration aditiva e source_work_id no coletor; preservar eventos/notas e identidade de série no replay. APP-01. Full/Quick/vet passaram com GOFLAGS=-p=1 e GOMAXPROCS=2 após limite de memória virtual do Windows na tentativa paralela. TestMigrationPreservesData mantém nota 8.5/comentário e evento antigo e aceita nota zero sem TMDB; TestWorkIdentity compara IDs 101/200/200; TestWorkReplayPreservesRating exige count=1, work=200, title_id preservado e nota 9 intacta após replay enriquecido. Nenhuma asserção anterior foi alterada.
 
 ### T2: ciclo de credenciais e sessões
 Where: internal/auth

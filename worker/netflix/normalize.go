@@ -56,11 +56,13 @@ func Normalize(body []byte, zone *time.Location) ([]collector.Event, error) {
 		}
 		instant := time.UnixMilli(stamp).UTC()
 		key := fmt.Sprintf("netflix:%s:%d", id, stamp)
-		e := collector.Event{SourceKey: key, SourceTitleID: id, SourceTitle: label, WatchedOn: instant.In(zone).Format(time.DateOnly), WatchedAt: &instant, MatchTitle: title}
+		e := collector.Event{SourceKey: key, SourceTitleID: id, SourceWorkID: id, SourceTitle: label, WatchedOn: instant.In(zone).Format(time.DateOnly), WatchedAt: &instant, MatchTitle: title}
 		if len(item.Series) > 0 && string(item.Series) != "null" && string(item.Series) != "0" {
-			if _, err := positiveID(item.Series); err != nil {
+			workID, err := positiveID(item.Series)
+			if err != nil {
 				return nil, collector.ErrParserChanged
 			}
+			e.SourceWorkID = workID
 			e.MediaType = "tv"
 			e.MatchTitle = strings.TrimSpace(item.SeriesTitle)
 		} else if item.VideoType == "movie" {

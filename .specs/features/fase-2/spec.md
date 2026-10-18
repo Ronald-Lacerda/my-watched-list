@@ -75,7 +75,7 @@ Melhores do ano e estatísticas de duração/gênero (Fase 3), novos streamings,
 
 | ID | Critérios | Estado |
 | --- | --- | --- |
-| APP-01 | 1–3 | pending |
+| APP-01 | 1–3 | verified |
 | APP-02 | 4–7 | pending |
 | APP-03 | 8–9 | pending |
 | APP-04 | 10–12, 21 | pending |
