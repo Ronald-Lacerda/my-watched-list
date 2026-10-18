@@ -14,8 +14,8 @@ App de notas, autenticação web, rankings, outros streamings e execução do fa
 | --- | --- | --- |
 | Perfis | Gabriela e R, informados pelo usuário | Conexões independentes, login validado pelo GUID do perfil |
 | Sessão | Login local assistido e estado Playwright criptografado no banco | Sem arquivo de cookies em texto simples |
-| API Netflix | Descoberta pela resposta JSON da página viewingactivity e paginação pelo botão do site | Não fixar build/URL interna sem captura real |
-| Formato | Adaptador estrito para viewedItems; fixture sintética identificada | Rejeitar mudanças de parser em vez de salvar parcial |
+| API Netflix | vaModel.data no HTML inicial e atom Falcor jsonGraph.aui.viewingActivity.value na paginação | Contrato observado em sessão autorizada; endpoint/build descoberto pelo site |
+| Formato | Adaptador estrito para viewedItems; fixture sintética identificada. Título explicitamente em branco vira “Título indisponível na Netflix”, com MatchTitle vazio | Decisão do usuário após ocorrência real; preservar ID/data sem busca TMDB inventada |
 | Datas | Epoch em milissegundos preserva instante e dia em America/Sao_Paulo | Datas inválidas falham; sem inventar horário |
 | Chave de evento | movieID + instante UTC | Independente de título traduzido e paginação; limita distinção ao que a fonte informa |
 | TMDB | Somente correspondência exata única em título/título original e tipo conhecido | Ambiguidade mantém evento pendente sem associação incorreta |
@@ -30,8 +30,8 @@ App de notas, autenticação web, rankings, outros streamings e execução do fa
 1. WHEN salvar sessão, o sistema SHALL persistir somente envelope AES-256-GCM com nonce aleatório e versão 1; alteração do ciphertext ou contexto de conexão SHALL impedir a leitura.
 2. IF a chave não tiver 32 bytes válidos em base64, o worker SHALL falhar antes de iniciar qualquer coleta, sem registrar seu valor.
 3. WHEN normalizar JSON válido, o sistema SHALL preservar ID Netflix, título, instante UTC, dia no fuso configurado e produzir chave idêntica em replay mesmo com mudança de ordem ou título traduzido.
-4. IF payload, identidade ou data estiverem inválidos, o normalizador SHALL retornar erro de parser sem devolver lote parcial; histórico explicitamente vazio SHALL ser aceito.
-5. WHEN coletar, o navegador SHALL usar somente a sessão da conexão, verificar GUID do perfil e percorrer o histórico até o término; limite, repetição de página ou falha SHALL impedir sucesso parcial.
+4. IF payload, identidade ou data estiverem inválidos, o normalizador SHALL retornar erro de parser sem devolver lote parcial; histórico explicitamente vazio SHALL ser aceito. WHEN title for uma string em branco, o sistema SHALL preservar ID/data e exibir “Título indisponível na Netflix”, sem pista de busca TMDB; title ausente/null SHALL continuar inválido.
+5. WHEN coletar, o navegador SHALL usar somente a sessão da conexão, verificar o GUID de profileInfo da atividade e percorrer o histórico até o botão desaparecer ou ficar desabilitado; quando vhSize estiver presente, o total de eventos únicos SHALL coincidir com ele. Limite, repetição de página ou falha SHALL impedir sucesso parcial.
 6. IF sessão estiver expirada ou perfil estiver incorreto, o sistema SHALL impedir inserções e marcar needs_login; mudança de parser SHALL marcar error sem atualizar last_sync_at.
 7. WHEN sincronizar o mesmo lote duas vezes, inclusive com duas execuções concorrentes, o PostgreSQL SHALL manter um evento por conexão/chave e permitir nova visualização com instante distinto.
 8. IF ocorrer falha ao persistir um lote, a transação SHALL não deixar eventos parciais nem marcar último sucesso.
@@ -47,7 +47,7 @@ App de notas, autenticação web, rankings, outros streamings e execução do fa
 | --- | --- | --- |
 | NFLX-01 | Sessões, AC 1–2 | verified |
 | NFLX-02 | Normalização, AC 3–4 | verified |
-| NFLX-03 | Browser, AC 5–6 | pending |
+| NFLX-03 | Browser, AC 5–6 | verified |
 | NFLX-04 | Persistência, AC 7–8 | verified |
 | NFLX-05 | Metadados, AC 9–10 | verified |
 | NFLX-06 | CLI e agenda, AC 6/11/12 | verified |

@@ -47,7 +47,7 @@ Where: worker/netflix
 Depends on: T2
 Tests: integration browser
 Gate: Full
-- [x] Login assistido, perfil, paginação e falhas categorizadas; NFLX-03. TestBrowserCapture passou em Chromium nos cinco cenários: duas páginas, perfil errado, schema alterado, página repetida e redirecionamento ao login. go test/vet aprovados. Login Netflix real ainda depende da janela local; não é substituído por este teste.
+- [x] Login assistido, perfil, paginação e falhas categorizadas; NFLX-03. TestBrowserCapture passou em Chromium nos cinco cenários: duas páginas, perfil errado, schema alterado, página repetida e redirecionamento ao login. go test/vet aprovados. Contrato real confirmado em 18/10/2026: vaModel.data inicial e Falcor na paginação, botão desabilitado ao terminar, vhSize conferido. R: 557 eventos; Gabriela: 691. TestBrowserFalcor acrescenta sucesso, vazio, perfil incorreto na paginação, parser, limite e total incompleto. TestUnavailableTitle cobre decisão explícita de preservar título em branco. A fixture continua sintética; nenhum histórico/cookie real está versionado.
 
 ### T4: repositório de coleta
 Where: worker/store
@@ -68,7 +68,7 @@ Where: worker/cmd/worker
 Depends on: T5
 Tests: unit e integração
 Gate: Full
-- [x] Bootstrap, login, status, sync e agenda com contexto; NFLX-06. TestPipeline aprovado em PostgreSQL: normalizador → cifragem → sync → TMDB/vínculo, replay, falha TMDB seguida de retry, expiração, parser e erro de driver sem segredo. TestDailySchedule confere 04:00 e TestInvalidKeyStopsBeforeNetwork exige falha antes da rede. Suite integration e vet aprovados. Login real em andamento na janela local Chrome.
+- [x] Bootstrap, login, status, sync e agenda com contexto; NFLX-06. TestPipeline aprovado em PostgreSQL: normalizador → cifragem → sync → TMDB/vínculo, replay, falha TMDB seguida de retry, expiração, parser e erro de driver sem segredo. TestDailySchedule confere 04:00 e TestInvalidKeyStopsBeforeNetwork exige falha antes da rede. Suite integration e vet aprovados. Login real concluído em Chrome para R e Gabriela; GUID canônico lido na atividade.
 
 ### T7: ambiente e operação
 Where: deploy

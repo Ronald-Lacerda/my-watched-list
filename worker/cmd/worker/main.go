@@ -48,6 +48,7 @@ func run(ctx context.Context, args []string, input io.Reader, output io.Writer) 
 	ref := flags.String("account", "principal", "referência da conta")
 	id := flags.String("connection", "", "UUID da conexão")
 	channel := flags.String("channel", "", "canal do navegador local para login")
+	reuse := flags.String("reuse-connection", "", "reaproveitar autenticação local de outra conexão")
 	if flags.Parse(args) != nil || flags.NArg() != 0 {
 		return errors.New("argumentos inválidos; consulte README")
 	}
@@ -111,8 +112,26 @@ func run(ctx context.Context, args []string, input io.Reader, output io.Writer) 
 			return errors.New("login exige --user-id e --profile")
 		}
 		b := netflix.Browser{Zone: zone, LoginChannel: *channel}
-		p, state, err := b.Login(ctx, *profile, func() error {
-			fmt.Fprintf(output, "Na janela do coletor, faça login e selecione o perfil %s. Depois pressione Enter neste terminal.\n", *profile)
+		var initial []byte
+		if *reuse != "" {
+			list, e := s.Accounts(ctx, true)
+			if e != nil {
+				return errors.New("falha ao ler conexão de origem")
+			}
+			for _, a := range list {
+				if a.ID == *reuse {
+					initial, e = cipher.Open(a.ID, a.EncryptedSession)
+					if e != nil {
+						return errors.New("sessão de origem inválida")
+					}
+				}
+			}
+			if len(initial) == 0 {
+				return errors.New("conexão de origem não encontrada")
+			}
+		}
+		p, state, err := b.LoginWithState(ctx, *profile, initial, func() error {
+			fmt.Fprintf(output, "Na janela do coletor, faça login e selecione o perfil %s. Mantenha a janela aberta e pressione Enter neste terminal; o coletor fechará a janela após salvar a sessão.\n", *profile)
 			_, e := bufio.NewReader(input).ReadString('\n')
 			return e
 		})

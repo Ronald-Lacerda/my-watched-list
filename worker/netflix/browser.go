@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/url"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -89,7 +90,7 @@ func openBrowser(ctx context.Context, state []byte, headed bool, channel string)
 }
 
 func currentProfile(page pw.Page) (Profile, error) {
-	value, err := page.Evaluate(`() => { const u=window.netflix?.reactContext?.models?.memberContext?.data?.userInfo; return u ? {guid:u.guid,name:u.name} : null; }`)
+	value, err := page.Evaluate(`() => { const m=window.netflix?.reactContext?.models; const v=m?.vaModel?.data?.profileInfo; if(v) return {guid:v.guid,name:v.profileName}; const u=m?.memberContext?.data?.userInfo ?? m?.userInfo?.data ?? m?.auiUserContext?.data; return u ? {guid:u.guid,name:u.name} : null; }`)
 	if err != nil {
 		return Profile{}, collector.ErrParserChanged
 	}
@@ -104,7 +105,13 @@ func currentProfile(page pw.Page) (Profile, error) {
 // Login abre uma janela isolada. O operador autentica e escolhe seu perfil;
 // confirm apenas aguarda a confirmação local, nunca recebe senha/cookies.
 func (b Browser) Login(ctx context.Context, expectedName string, confirm func() error) (Profile, []byte, error) {
-	bc, page, close, err := openBrowser(ctx, nil, true, b.LoginChannel)
+	return b.LoginWithState(ctx, expectedName, nil, confirm)
+}
+
+// LoginWithState reaproveita a autenticação cifrada de outra conexão local;
+// o perfil escolhido ainda precisa ser confirmado antes de salvar a nova sessão.
+func (b Browser) LoginWithState(ctx context.Context, expectedName string, state []byte, confirm func() error) (Profile, []byte, error) {
+	bc, page, close, err := openBrowser(ctx, state, true, b.LoginChannel)
 	if err != nil {
 		return Profile{}, nil, err
 	}
@@ -115,15 +122,42 @@ func (b Browser) Login(ctx context.Context, expectedName string, confirm func() 
 		}
 		return Profile{}, nil, ErrBrowser
 	}
+	_ = page.BringToFront()
 	if err = confirm(); err != nil {
 		return Profile{}, nil, err
 	}
-	p, err := currentProfile(page)
-	if err != nil || p.Name != expectedName {
-		return Profile{}, nil, collector.ErrLoginRequired
+	for _, candidate := range bc.Pages() {
+		if !candidate.IsClosed() && strings.HasPrefix(candidate.URL(), "https://www.netflix.com/") {
+			page = candidate
+		}
 	}
-	state, err := stateJSON(bc)
-	return p, state, err
+	// A troca de perfil pode acontecer via SPA sem atualizar reactContext.
+	// Recarregar confirma o GUID e nome atuais a partir da sessão do servidor.
+	if _, err = page.Goto(b.entry()); err != nil {
+		return Profile{}, nil, navigationError(err)
+	}
+	p, err := currentProfile(page)
+	if err != nil {
+		return Profile{}, nil, err
+	}
+	if !strings.EqualFold(strings.TrimSpace(p.Name), strings.TrimSpace(expectedName)) {
+		return Profile{}, nil, errors.New("perfil selecionado não corresponde ao solicitado: " + p.Name)
+	}
+	fresh, err := stateJSON(bc)
+	return p, fresh, err
+}
+
+func navigationError(err error) error {
+	if code := regexp.MustCompile(`net::ERR_[A-Z_]+`).FindString(err.Error()); code != "" {
+		return errors.New("navegação Netflix: " + code)
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "closed") {
+		return errors.New("a janela ou aba do coletor foi fechada")
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "timeout") {
+		return errors.New("tempo esgotado ao carregar a Netflix")
+	}
+	return ErrBrowser
 }
 
 func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string) (Batch, error) {
@@ -135,9 +169,28 @@ func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string
 	target, _ := url.Parse(b.entry())
 	predicate := func(r pw.Response) bool {
 		u, e := url.Parse(r.URL())
-		return e == nil && u.Host == target.Host && strings.Contains(strings.ToLower(u.Path), "viewingactivity") && (strings.Contains(r.Headers()["content-type"], "json") || r.Status() == 401 || r.Status() == 403)
+		if e != nil || u.Host != target.Host {
+			return false
+		}
+		path := strings.ToLower(u.Path)
+		activity := strings.Contains(path, "viewingactivity")
+		if strings.Contains(path, "/pathevaluator/") {
+			post, _ := r.Request().PostData()
+			query, _ := url.QueryUnescape(u.RawQuery)
+			activity = strings.Contains(strings.ToLower(post+query), "viewingactivity")
+		}
+		return activity && (strings.Contains(r.Headers()["content-type"], "json") || r.Status() == 401 || r.Status() == 403)
 	}
-	response, err := page.ExpectResponse(predicate, func() error { _, e := page.Goto(b.entry()); return e })
+	initial := make(chan pw.Response, 1)
+	page.OnResponse(func(r pw.Response) {
+		if predicate(r) {
+			select {
+			case initial <- r:
+			default:
+			}
+		}
+	})
+	_, err = page.Goto(b.entry())
 	if strings.Contains(page.URL(), "/login") {
 		return Batch{}, collector.ErrLoginRequired
 	}
@@ -151,6 +204,26 @@ func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string
 	if profile.ID != expectedProfile {
 		return Batch{}, collector.ErrLoginRequired
 	}
+	var body []byte
+	bootstrap, e := page.Evaluate(`() => window.netflix?.reactContext?.models?.vaModel?.data ?? null`)
+	if e != nil {
+		return Batch{}, collector.ErrParserChanged
+	}
+	if bootstrap != nil {
+		body, err = json.Marshal(bootstrap)
+	} else {
+		select {
+		case r := <-initial:
+			body, err = responseBody(r)
+		case <-ctx.Done():
+			return Batch{}, ctx.Err()
+		case <-time.After(15 * time.Second):
+			return Batch{}, collector.ErrParserChanged
+		}
+	}
+	if err != nil {
+		return Batch{}, err
+	}
 	limit := b.MaxPages
 	if limit == 0 {
 		limit = 1000
@@ -160,20 +233,31 @@ func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string
 		zone = time.UTC
 	}
 	all := make([]collector.Event, 0)
+	unique := map[string]bool{}
+	total := -1
 	fingerprints := map[[32]byte]bool{}
 	for n := 0; n < limit; n++ {
 		if ctx.Err() != nil {
 			return Batch{}, ctx.Err()
 		}
-		if response.Status() == 401 || response.Status() == 403 {
+		if len(body) > 16<<20 {
+			return Batch{}, collector.ErrParserChanged
+		}
+		payload, guid, e := activityData(body)
+		if e != nil {
+			return Batch{}, e
+		}
+		if guid != "" && guid != expectedProfile {
 			return Batch{}, collector.ErrLoginRequired
 		}
-		if response.Status() != 200 {
-			return Batch{}, ErrBrowser
+		var progress struct {
+			Total *int `json:"vhSize"`
 		}
-		body, e := response.Body()
-		if e != nil || len(body) > 16<<20 {
+		if json.Unmarshal(payload, &progress) != nil || (progress.Total != nil && (*progress.Total < 0 || (total >= 0 && total != *progress.Total))) {
 			return Batch{}, collector.ErrParserChanged
+		}
+		if progress.Total != nil {
+			total = *progress.Total
 		}
 		events, e := Normalize(body, zone)
 		if e != nil {
@@ -183,7 +267,9 @@ func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string
 		keys := make([]string, len(events))
 		for i, event := range events {
 			keys[i] = event.SourceKey
+			unique[event.SourceKey] = true
 		}
+		sort.Strings(keys)
 		fp := sha256.Sum256([]byte(strings.Join(keys, "\n")))
 		if fingerprints[fp] && len(events) > 0 {
 			return Batch{}, collector.ErrParserChanged
@@ -195,7 +281,18 @@ func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string
 		if e != nil {
 			return Batch{}, collector.ErrParserChanged
 		}
-		if count == 0 {
+		finished := count == 0
+		if count == 1 {
+			enabled, e := more.IsEnabled()
+			if e != nil {
+				return Batch{}, collector.ErrParserChanged
+			}
+			finished = !enabled
+		}
+		if finished {
+			if total >= 0 && len(unique) != total {
+				return Batch{}, collector.ErrParserChanged
+			}
 			p, e := currentProfile(page)
 			if e != nil || p.ID != expectedProfile {
 				return Batch{}, collector.ErrLoginRequired
@@ -209,15 +306,37 @@ func (b Browser) Fetch(ctx context.Context, state []byte, expectedProfile string
 		if count != 1 {
 			return Batch{}, collector.ErrParserChanged
 		}
-		response, err = page.ExpectResponse(predicate, func() error { return more.Click() })
+		response, err := page.ExpectResponse(predicate, func() error { return more.Click() })
 		if strings.Contains(page.URL(), "/login") {
 			return Batch{}, collector.ErrLoginRequired
 		}
 		if err != nil {
 			return Batch{}, collector.ErrParserChanged
 		}
+		body, err = responseBody(response)
+		if err != nil {
+			return Batch{}, err
+		}
+		// Esperar a renderização após o JSON evita ler o botão antigo da página.
+		if _, err = page.Evaluate(`() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))`); err != nil {
+			return Batch{}, collector.ErrParserChanged
+		}
 	}
 	return Batch{}, collector.ErrParserChanged
+}
+
+func responseBody(response pw.Response) ([]byte, error) {
+	if response.Status() == 401 || response.Status() == 403 {
+		return nil, collector.ErrLoginRequired
+	}
+	if response.Status() != 200 {
+		return nil, ErrBrowser
+	}
+	body, err := response.Body()
+	if err != nil {
+		return nil, ErrBrowser
+	}
+	return body, nil
 }
 
 func stateJSON(bc pw.BrowserContext) ([]byte, error) {

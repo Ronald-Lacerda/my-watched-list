@@ -46,7 +46,7 @@ func TestNormalize(t *testing.T) {
 
 func TestInvalidPayloadIsAtomic(t *testing.T) {
 	zone := time.UTC
-	for _, body := range []string{`{}`, `{"viewedItems":null}`, `{"viewedItems":{}}`, `<html>login</html>`, `{"viewedItems":[{"movieID":1,"title":"Ok","date":1725233400000},{"movieID":0,"title":"Inválido","date":1725233400000}]}`, `{"viewedItems":[{"movieID":1,"title":"X","date":1725233400}]}`, `{"viewedItems":[{"movieID":1,"title":" ","date":1725233400000}]}`, `{"viewedItems":[{"movieID":1,"title":"X","date":1725233400000,"seasonNumber":1}]}`} {
+	for _, body := range []string{`{}`, `{"viewedItems":null}`, `{"viewedItems":{}}`, `<html>login</html>`, `{"viewedItems":[{"movieID":1,"title":"Ok","date":1725233400000},{"movieID":0,"title":"Inválido","date":1725233400000}]}`, `{"viewedItems":[{"movieID":1,"title":"X","date":1725233400}]}`, `{"viewedItems":[{"movieID":1,"date":1725233400000}]}`, `{"viewedItems":[{"movieID":1,"title":"X","date":1725233400000,"seasonNumber":1}]}`} {
 		events, err := Normalize([]byte(body), zone)
 		if !errors.Is(err, collector.ErrParserChanged) || events != nil {
 			t.Fatalf("payload inválido aceito: %s", body)
@@ -55,5 +55,22 @@ func TestInvalidPayloadIsAtomic(t *testing.T) {
 	events, err := Normalize([]byte(`{"viewedItems":[]}`), zone)
 	if err != nil || len(events) != 0 {
 		t.Fatal("histórico vazio rejeitado")
+	}
+}
+
+// AC 3–4: título explicitamente em branco é um registro indisponível válido;
+// ausência/null continuam sendo mudança de contrato. Decisão confirmada no uso real.
+func TestUnavailableTitle(t *testing.T) {
+	events, err := Normalize([]byte(`{"viewedItems":[{"movieID":42,"title":" ","date":1725233400000}]}`), time.UTC)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("registro indisponível: %v %v", events, err)
+	}
+	e := events[0]
+	if e.SourceTitle != "Título indisponível na Netflix" || e.SourceTitleID != "42" || e.SourceKey != "netflix:42:1725233400000" || e.MatchTitle != "" || e.WatchedAt.Format(time.RFC3339) != "2024-09-01T23:30:00Z" {
+		t.Fatalf("registro perdeu identidade: %+v", e)
+	}
+	events, err = Normalize([]byte(`{"viewedItems":[{"movieID":42,"title":null,"date":1725233400000}]}`), time.UTC)
+	if !errors.Is(err, collector.ErrParserChanged) || events != nil {
+		t.Fatal("null aceito como título indisponível")
 	}
 }

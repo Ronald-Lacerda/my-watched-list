@@ -66,3 +66,62 @@ func TestBrowserCapture(t *testing.T) {
 		})
 	}
 }
+
+// Contrato SSR + Falcor observado na Netflix; dados inteiramente sintéticos.
+// A identidade da atividade prevalece sobre o userInfo da página browse.
+func TestBrowserFalcor(t *testing.T) {
+	for _, mode := range []string{"normal", "vazio", "perfil-na-paginacao", "parser-na-paginacao", "limite", "total-incompleto"} {
+		t.Run(mode, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path == "/api/aui/pathEvaluator/web/test" {
+					w.Header().Set("Content-Type", "application/json")
+					if mode == "parser-na-paginacao" {
+						fmt.Fprint(w, `{"jsonGraph":{"aui":{}}}`)
+						return
+					}
+					guid := "atividade-r"
+					if mode == "perfil-na-paginacao" {
+						guid = "atividade-outra-pessoa"
+					}
+					fmt.Fprintf(w, `{"jsonGraph":{"aui":{"viewingActivity":{"$type":"atom","value":{"vhSize":2,"profileInfo":{"guid":%q,"profileName":"R"},"viewedItems":[{"movieID":2,"title":"Segundo filme","date":1725319800000}]}}}}}`, guid)
+					return
+				}
+				items := `[{movieID:1,title:"Primeiro filme",date:1725233400000}]`
+				total := 2
+				if mode == "vazio" {
+					items = `[]`
+					total = 0
+				}
+				fmt.Fprintf(w, `<script>window.netflix={reactContext:{models:{userInfo:{data:{guid:"usuario-diferente",name:"R"}},vaModel:{data:{vhSize:%d,profileInfo:{guid:"atividade-r",profileName:"R"},viewedItems:%s}}}}};</script>`, total, items)
+				if mode != "vazio" && mode != "total-incompleto" {
+					fmt.Fprint(w, `<button onclick="fetch('/api/aui/pathEvaluator/web/test?paths=%5B%22viewingActivity%22%5D').then(r=>r.json()).then(()=>this.disabled=true)">Mostrar mais</button>`)
+				}
+			}))
+			defer server.Close()
+			limit := 3
+			if mode == "limite" {
+				limit = 1
+			}
+			batch, err := (Browser{entryURL: server.URL + "/viewingactivity", Zone: time.UTC, MaxPages: limit}).Fetch(context.Background(), nil, "atividade-r")
+			if mode == "normal" {
+				if err != nil || len(batch.Events) != 2 || batch.Events[0].SourceTitleID != "1" || batch.Events[1].SourceTitleID != "2" || len(batch.State) == 0 {
+					t.Fatalf("SSR/Falcor: %+v %v", batch, err)
+				}
+				return
+			}
+			if mode == "vazio" {
+				if err != nil || len(batch.Events) != 0 || len(batch.State) == 0 {
+					t.Fatalf("histórico vazio: %+v %v", batch, err)
+				}
+				return
+			}
+			want := collector.ErrParserChanged
+			if mode == "perfil-na-paginacao" {
+				want = collector.ErrLoginRequired
+			}
+			if !errors.Is(err, want) || batch.Events != nil {
+				t.Fatalf("lote parcial aceito no modo %s: %+v %v", mode, batch, err)
+			}
+		})
+	}
+}
