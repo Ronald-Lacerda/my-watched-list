@@ -54,7 +54,7 @@ Where: worker/store
 Depends on: T3
 Tests: integration postgres
 Gate: Full
-- [ ] Migration de pistas de enriquecimento, lock, transação, status e replay concorrente; NFLX-04.
+- [x] Migration de pistas de enriquecimento, lock, transação, status e replay concorrente; NFLX-04. TestPersistence em PostgreSQL Docker aprovado: round-trip cifrado, replay count=1, lock concorrente, revisita count=2, rollback de lote parcial e last_sync_at inalterado na falha. Suite completa com integration aprovada.
 
 ### T5: enriquecimento TMDB
 Where: worker/tmdb
