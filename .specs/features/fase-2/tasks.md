@@ -76,7 +76,7 @@ Where: web/src
 Depends on: T6
 Tests: integration browser
 Gate: Full
-- [ ] Filtros, paginação, pendentes, diálogo de nota, média e conexões; testes de recarga, duas pessoas, mobile e teclado. APP-07.
+- [x] Filtros, paginação, pendentes, diálogo de nota, média e conexões. APP-07. Build web e Full/Quick/vet/build Go passaram. TestBrowserJournalAndIndividualRatings verifica filtros combinados/vazio (linhas 66–80), zero/reload/duas pessoas e média 5/4,25/0 (90–127), pendentes e conexões (129–141), Escape/foco (82–89) e 390 px sem overflow (142–150). TestBrowserPaginationAndRecovery exige 61 IDs únicos, reset para um resultado, erro/retry e preservação do formulário até sucesso (154–207). Screenshots de desktop, celular e diálogo revisados. Os testes revelaram rótulos ambíguos e arredondamento da média para uma casa; ambos corrigidos na UI. Nenhuma asserção anterior da Fase 1 ou T1–T6 foi alterada.
 
 ### T8: PWA e ambiente de uso
 Where: deploy

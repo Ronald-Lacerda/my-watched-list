@@ -33,4 +33,4 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
 }
 export function message(error: unknown): string { return error instanceof Error ? error.message : 'Não foi possível concluir. Tente novamente.' }
 export function serviceName(service: string): string { return ({ netflix: 'Netflix', prime_video: 'Prime Video', disney_plus: 'Disney+', max: 'Max', apple_tv: 'Apple TV+' } as Record<string, string>)[service] ?? service }
-export function scoreLabel(score: number): string { return score.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) }
+export function scoreLabel(score: number): string { return score.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) }

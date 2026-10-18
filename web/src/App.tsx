@@ -1,26 +1,30 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { api, ApiError, message, type User } from './api'
+import { api, ApiError, message, type User, type Connection } from './api'
 import { AuthScreen } from './AuthScreen'
 import { Brand, Icon } from './icons'
+import { Journal } from './Journal'
+import { Connections } from './Connections'
 
 export type View = 'history' | 'pending' | 'connections'
 export function readView(): View { const value = new URLSearchParams(location.search).get('view'); return value === 'pending' || value === 'connections' ? value : 'history' }
 function readInvite() { const token = new URLSearchParams(location.hash.slice(1)).get('ativar'); if (token) history.replaceState(null, '', location.pathname + location.search); return token }
 const initialInvite = readInvite()
 
-export function Shell({ user, view, onView, onLogout, children }: { user: User; view: View; onView: (view: View) => void; onLogout: () => Promise<void>; children: ReactNode }) {
+export function Shell({ user, view, attention, onView, onLogout, children }: { user: User; view: View; attention: number; onView: (view: View) => void; onLogout: () => Promise<void>; children: ReactNode }) {
   const [logoutError, setLogoutError] = useState(''), [leaving, setLeaving] = useState(false)
   const nav = [{ id: 'history' as const, label: 'Histórico', icon: 'history' as const }, { id: 'pending' as const, label: 'Para avaliar', icon: 'star' as const }, { id: 'connections' as const, label: 'Conexões', icon: 'link' as const }]
   async function leave() { setLeaving(true); setLogoutError(''); try { await onLogout() } catch (err) { setLogoutError(message(err)) } finally { setLeaving(false) } }
   return <div className="app-layout"><aside className="sidebar"><Brand /><p className="nav-label">NOSSO CANTINHO</p><nav className="desktop-nav" aria-label="Navegação principal">{nav.map(item => <button key={item.id} className={`nav-item ${view === item.id ? 'active' : ''}`} aria-current={view === item.id ? 'page' : undefined} onClick={() => onView(item.id)}><Icon name={item.icon} /><span>{item.label}</span>{view === item.id && <span className="nav-active-dot" />}</button>)}</nav><div className="sidebar-bottom"><p className="sidebar-note">Boas histórias.<br /><em>Melhores lembranças.</em></p><div className="account"><span className="avatar">{user.name.slice(0, 1)}</span><span className="account-name"><strong>{user.name}</strong><small>Sua conta pessoal</small></span><button className="icon-button" onClick={leave} disabled={leaving} aria-label="Sair da conta"><Icon name="logout" size={18} /></button></div></div></aside>
     <header className="mobile-header"><Brand /><button className="mobile-account" onClick={leave} disabled={leaving} aria-label="Sair da conta"><span className="avatar">{user.name.slice(0, 1)}</span><Icon name="logout" size={17} /></button></header>
-    <main className="app-main">{logoutError && <p role="alert" className="notice error">{logoutError}</p>}{children}</main>
+    <main className="app-main">{logoutError && <p role="alert" className="notice error">{logoutError}</p>}{attention > 0 && view !== 'connections' && <aside className="connection-notice"><Icon name="alert" size={16} /><span>{attention === 1 ? 'Uma conexão precisa' : 'Algumas conexões precisam'} da sua atenção.</span><button onClick={() => onView('connections')}>Ver conexões <Icon name="arrow" size={14} /></button></aside>}{children}</main>
     <nav className="mobile-nav" aria-label="Navegação no celular">{nav.map(item => <button key={item.id} className={view === item.id ? 'active' : ''} aria-current={view === item.id ? 'page' : undefined} onClick={() => onView(item.id)}><Icon name={item.icon} size={21} /><span>{item.label}</span></button>)}</nav>
   </div>
 }
 export function App() {
   const [invite, setInvite] = useState(initialInvite), [user, setUser] = useState<User | null>(null), [loading, setLoading] = useState(!initialInvite)
   const [error, setError] = useState(''), [retry, setRetry] = useState(0), [view, setView] = useState<View>(readView)
+  const [attention, setAttention] = useState(0)
+  useEffect(() => { if (!user) { setAttention(0); return }; const controller = new AbortController(); api<{ connections: Connection[] }>('/connections', { signal: controller.signal }).then(value => { if (!controller.signal.aborted) setAttention(value.connections.filter(item => item.status === 'needs_login' || item.status === 'error').length) }).catch(() => {}); return () => controller.abort() }, [user?.id])
   useEffect(() => {
     if (invite) return
     const controller = new AbortController(); setLoading(true); setError('')
@@ -38,5 +42,5 @@ export function App() {
   if (loading) return <div className="startup"><Brand /><p role="status">Preparando nosso diário…</p></div>
   if (error && !user) return <div className="startup"><Brand /><p role="alert" className="notice error">{error}</p><button className="button primary" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>
   if (invite || !user) return <AuthScreen invite={invite} onAuthenticated={value => { setUser(value); setInvite(null) }} />
-  return <Shell user={user} view={view} onView={navigate} onLogout={logout}><header className="page-heading"><p className="eyebrow">UM REGISTRO A DOIS</p><h1>{view === 'history' ? 'Nosso histórico' : view === 'pending' ? 'Para avaliar' : 'Nossas conexões'}</h1><p className="muted">Um lugar para guardar o que assistimos e o que ficou.</p></header><section className="panel"><p>Seu diário está pronto para receber nossas histórias.</p></section></Shell>
+  return <Shell user={user} view={view} attention={attention} onView={navigate} onLogout={logout}>{view === 'connections' ? <Connections /> : <Journal key={view} user={user} pending={view === 'pending'} />}</Shell>
 }
