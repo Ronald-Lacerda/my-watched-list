@@ -11,4 +11,4 @@
 
 ## Handoff
 
-Fase 0 implementada na branch feat/fase-0, aguardando revisão independente e execução do CI. Usuário autorizou criar repositório GitHub novo; padrão escolhido: privado, my-watched-list. Não implantar na VPS nem iniciar Fase 1 nesta entrega. Docker Desktop local falha no socket dockerInference; testes de banco e smoke test executados com PostgreSQL/Caddy nativos temporários.
+Fase 0 concluída na branch feat/fase-0. Revisão independente PASS: 16/16 critérios, 10/10 mutações detectadas. CI inicial passou nos jobs Go, web e containers; actions atualizadas para v7 e validadas com actionlint, com conferência do CI final antes da entrega do PR. Repositório privado criado por solicitação do usuário: Ronald-Lacerda/my-watched-list; PR #1. Próximo passo: revisão da estrutura pelo usuário, depois Fase 1 Netflix. VPS ainda depende de SO, recursos, domínio e Docker informados. Docker Desktop local falha no socket dockerInference; banco/smoke locais usaram PostgreSQL/Caddy nativos temporários, e containers passaram no CI Linux.

@@ -150,7 +150,7 @@ docker compose -f deploy/compose.test.yaml down -v
 
 A tag `integration` exige `TEST_DATABASE_URL`; sua ausência falha explicitamente. Os testes criam e removem um schema aleatório, exercitam up/down/up, reaplicação sem mudanças, replay de eventos, revisitas, notas e chaves estrangeiras. Use sempre um banco de teste, pois o usuário precisa de permissão para criar/remover schemas. Testes de normalização do payload Netflix serão adicionados junto com o normalizador na Fase 1, usando fixtures sanitizadas.
 
-O GitHub Actions executa testes Go com race detector, integração PostgreSQL, build web e smoke test da stack Docker. O workflow está preparado; sua execução remota depende da publicação no GitHub.
+O GitHub Actions executa testes Go com race detector, integração PostgreSQL, build web e smoke test da stack Docker. Os três jobs passaram na [validação inicial da Fase 0](https://github.com/Ronald-Lacerda/my-watched-list/actions/runs/39166847423). A revisão independente confirmou 16 critérios e detectou 10 falhas injetadas em cópia isolada; consulte `.specs/features/fase-0/validation.md`. O Docker Desktop local não iniciou por erro no socket dockerInference, portanto os containers foram validados no runner Linux da CI; localmente usamos PostgreSQL e Caddy temporários nativos.
 
 ## VPS e HTTPS
 
@@ -194,4 +194,4 @@ Dados a informar antes do deploy/coletor: SO e recursos da VPS, instalação atu
 - [Caddy para SPA com API](https://caddyserver.com/docs/caddyfile/patterns)
 - [Imagem oficial PostgreSQL](https://hub.docker.com/_/postgres)
 
-Commits pequenos em Conventional Commits, com descrições em português. Um PR por fase ou funcionalidade. A branch inicial é `feat/fase-0`. O usuário solicitou a criação de um repositório novo; adotamos `my-watched-list`, privado na conta GitHub autenticada.
+Commits pequenos em Conventional Commits, com descrições em português. Um PR por fase ou funcionalidade. A branch inicial é `feat/fase-0`. O usuário solicitou a criação de um repositório novo; adotamos [my-watched-list](https://github.com/Ronald-Lacerda/my-watched-list), privado na conta GitHub autenticada. A estrutura da Fase 0 está no [PR #1](https://github.com/Ronald-Lacerda/my-watched-list/pull/1), para revisão antes de iniciar a coleta Netflix.
