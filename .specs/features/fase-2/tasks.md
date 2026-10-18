@@ -41,7 +41,7 @@ Where: internal/auth
 Depends on: T1
 Tests: unit e integration postgres
 Gate: Full
-- [ ] Hash, sessões, convite de primeiro acesso/CLI e throttle persistido com testes de expiração, concorrência e revogação. APP-02.
+- [x] Hash, sessões, convite de primeiro acesso/CLI e throttle persistido com testes de expiração, concorrência e revogação. APP-02. Full/Quick/vet aprovados: TestPasswords compara hash/salt, senha errada, formato e limites Unicode; TestCredentialLifecycle confere TTL, hash persistido, revogação/logout/reset; TestInvitationConcurrencyAndExpiry exige exatamente um sucesso e uma rejeição; TestLoginThrottle exige 401 até a décima tentativa, 429 na 11ª e reset de janela/sucesso. TestInvitationCommand usa o link gerado, confere saída sem token e impede sobrescrita de arquivo.
 
 ### T3: fronteira HTTP autenticada
 Where: api/internal/httpapi

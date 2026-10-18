@@ -35,7 +35,7 @@ Melhores do ano e estatísticas de duração/gênero (Fase 3), novos streamings,
 1. WHEN aplicar a migration, o sistema SHALL preservar eventos e notas anteriores e aceitar notas por identidade própria sem exigir um registro TMDB.
 2. WHEN normalizar uma série, o coletor SHALL preservar o ID da série como source_work_id; filme usa movieID; replay com tradução diferente SHALL manter a identidade da obra.
 3. WHEN sincronizar eventos existentes, o worker SHALL preencher source_work_id sem duplicar eventos ou apagar notas, inclusive para eventos já enriquecidos.
-4. WHEN criar senha, o sistema SHALL aceitar 12–128 bytes UTF-8 e armazenar Argon2id com salt aleatório; senha inválida ou hash adulterado SHALL não autenticar.
+4. WHEN criar senha, o sistema SHALL aceitar 12–128 caracteres Unicode válidos e armazenar Argon2id com salt aleatório; senha inválida ou hash adulterado SHALL não autenticar.
 5. WHEN usar um convite válido de primeiro acesso, o sistema SHALL consumi-lo uma única vez em transação, definir senha e revogar sessões anteriores; convite expirado, reutilizado ou inválido SHALL retornar 401 sem criar sessão.
 6. WHEN autenticar com credenciais válidas, a API SHALL criar sessão de 14 dias, persistir somente hash do token e emitir cookie HttpOnly, SameSite=Lax e Secure em HTTPS; logout SHALL revogar a sessão e limpar o cookie.
 7. IF credenciais forem incorretas, a API SHALL responder 401 genérico; a 11ª tentativa por identificador em uma janela de 15 minutos SHALL retornar 429; login bem-sucedido SHALL zerar o contador.
@@ -76,7 +76,7 @@ Melhores do ano e estatísticas de duração/gênero (Fase 3), novos streamings,
 | ID | Critérios | Estado |
 | --- | --- | --- |
 | APP-01 | 1–3 | verified |
-| APP-02 | 4–7 | pending |
+| APP-02 | 4–7 | verified |
 | APP-03 | 8–9 | pending |
 | APP-04 | 10–12, 21 | pending |
 | APP-05 | 13–17 | pending |
