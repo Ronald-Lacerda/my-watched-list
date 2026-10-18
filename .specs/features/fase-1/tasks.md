@@ -40,7 +40,7 @@ Where: worker/netflix
 Depends on: T1
 Tests: unit
 Gate: Quick
-- [ ] Lote estrito, chave estável e datas corretas; NFLX-02.
+- [x] Lote estrito, chave estável e datas corretas; NFLX-02. TestNormalize preserva campos e confere virada UTC/dia local, tradução e ordem. TestInvalidPayloadIsAtomic rejeita lote parcial, IDs/datas inválidos e schema ausente; vazio explícito aceito. go test/vet aprovados. Corrigido literal horário UTC da fixture sintética durante criação do teste, mantendo comparação exata e adicionando caso de virada do dia.
 
 ### T3: adaptador Playwright
 Where: worker/netflix

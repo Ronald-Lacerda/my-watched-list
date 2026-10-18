@@ -31,6 +31,8 @@ type Event struct {
 	WatchedAt     *time.Time `json:"watched_at,omitempty"`
 	SeasonNumber  *int       `json:"season_number,omitempty"`
 	EpisodeNumber *int       `json:"episode_number,omitempty"`
+	MatchTitle    string     `json:"match_title,omitempty"`
+	MediaType     string     `json:"media_type,omitempty"`
 }
 
 type Collector interface {
