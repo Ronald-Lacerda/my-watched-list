@@ -47,7 +47,7 @@ Where: worker/netflix
 Depends on: T2
 Tests: integration browser
 Gate: Full
-- [ ] Login assistido, perfil, paginação e falhas categorizadas; NFLX-03.
+- [x] Login assistido, perfil, paginação e falhas categorizadas; NFLX-03. TestBrowserCapture passou em Chromium nos cinco cenários: duas páginas, perfil errado, schema alterado, página repetida e redirecionamento ao login. go test/vet aprovados. Login Netflix real ainda depende da janela local; não é substituído por este teste.
 
 ### T4: repositório de coleta
 Where: worker/store
