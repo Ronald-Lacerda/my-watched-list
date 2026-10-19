@@ -5,7 +5,7 @@ O EasyPanel administra HTTPS e encaminha o domínio para `web`, porta `80`. Use 
 ## Preparação
 
 1. Crie um serviço Compose chamado `my-watched-list`. Se a licença gratuita já tiver três projetos, use um projeto existente sem alterar seus outros serviços.
-2. Em Source/Git, configure o repositório, branch `main`, Build Path `/` e Docker Compose File `deploy/compose.easypanel.yaml`. Para repositório privado, use uma chave SSH exclusiva, cadastrada como deploy key somente de leitura no GitHub.
+2. Em Source/Git, configure o repositório, branch `main`, Build Path `/deploy` e Docker Compose File `compose.easypanel.yaml`. Assim o `.env` é criado junto ao Compose e os contextos `..` dos builds apontam para a raiz do repositório. Para repositório público, use a URL HTTPS sem credenciais. Para repositório privado, use uma chave SSH exclusiva, cadastrada como deploy key somente de leitura no GitHub.
 3. Em Environment, configure `POSTGRES_USER`, `POSTGRES_DB`, `POSTGRES_PASSWORD`, `SESSION_ENCRYPTION_KEY`, `TMDB_READ_ACCESS_TOKEN`, `APP_ORIGINS`, `SYNC_CRON` e `SYNC_TIMEZONE`, seguindo `.env.example`. `APP_ORIGINS` deve ser a URL HTTPS exata, sem barra final. Habilite a criação do arquivo `.env` para interpolação do Compose. Não coloque segredos na fonte YAML ou no Git.
 4. Ao migrar sessões Netflix existentes, preserve a mesma `SESSION_ENCRYPTION_KEY`. Mantenha `COMPOSE_PROFILES` vazio até concluir a restauração. O worker pertence ao perfil `collector`.
 5. Em Domains, associe o domínio HTTPS à porta `80` do serviço `web` e implante. O banco permanece acessível somente na rede interna. A API aguarda a conclusão das migrations e o frontend aguarda a saúde da API.

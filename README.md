@@ -163,15 +163,15 @@ A revisão independente da Fase 1 aprovou os 13 critérios e 75 testes/subtestes
 
 ## VPS e HTTPS
 
-Quando houver domínio com DNS apontando para a VPS Linux e portas 80/443 livres, preencha `APP_DOMAIN` no `.env`, por exemplo `watched.seudominio.com`, sem protocolo nem caminho. O Caddy emitirá e renovará certificados, persistidos nos seus volumes. O frontend estático e o proxy HTTPS ficam no mesmo container.
+O projeto está implantado no EasyPanel com PostgreSQL privado e HTTPS no proxy do painel. Consulte o [procedimento de deploy e restauração](docs/easypanel.md). Essa opção usa `deploy/compose.easypanel.yaml`, Build Path `/deploy` e domínio encaminhado para `web:80`.
 
-Comando para a futura implantação, a executar na VPS após configurar o ambiente:
+Para uma VPS sem painel, com domínio e portas 80/443 livres, preencha `APP_DOMAIN` no `.env`, por exemplo `watched.seudominio.com`, sem protocolo nem caminho. O Caddy emitirá e renovará certificados, persistidos nos seus volumes. Nessa alternativa, execute:
 
 ```sh
 docker compose --env-file .env -f deploy/compose.yaml -f deploy/compose.production.yaml up --build -d --wait
 ```
 
-O override substitui a porta local por 80/TCP e 443/TCP/UDP. O banco e a API continuam internos. A configuração atual é uma base de deploy; ainda não foi implantada na VPS. Definir backups de PostgreSQL e manter a chave de criptografia em backup separado antes de armazenar sessões reais.
+O override manual substitui a porta local por 80/TCP e 443/TCP/UDP. O banco e a API continuam internos. Não use esse override no EasyPanel. Preserve backups do PostgreSQL e da chave de criptografia separadamente.
 
 ## Segredos
 
@@ -187,13 +187,13 @@ O override substitui a porta local por 80/TCP e 443/TCP/UDP. O banco e a API con
 | --- | --- | --- |
 | 0 | Monorepo, processos, Compose, schema e README | Estrutura aprovada |
 | 1 | Netflix: sessão criptografada, API interna de histórico via Playwright, paginação, normalização, cron, idempotência e TMDB | Validada com TMDB real |
-| 2 | Auth para duas pessoas, timeline com filtros, notas, média do casal, pendentes e PWA | Planejada |
+| 2 | Auth para duas pessoas, timeline com filtros, notas, média do casal, pendentes e PWA | Entregue e implantada |
 | 3 | Melhores do ano, rankings individuais/do casal e estatísticas | Planejada |
 | 4 | Outros streamings e fallback assistido por LLM | Planejada |
 
-O tráfego real de `/viewingactivity` foi inspecionado em sessão autorizada: vaModel inicial e Falcor na paginação, com identidade e total conferidos. Foram salvos 557 eventos de R e 691 de Gabriela, sem aumento ao repetir o sync. Sessão expirada marca `needs_login`; mudança de parser registra erro sem marcar sync bem-sucedido. O token TMDB foi configurado somente no ambiente local; o catálogo foi enriquecido e os testes continuam usando HTTP controlado. A interface `AssistedExtractor` fica preparada para injeção futura, com página sanitizada e saída validada no mesmo schema dos eventos. Não há dependência de Trakt, Simkl nem de serviço de terceiros para coleta.
+O tráfego real de `/viewingactivity` foi inspecionado em sessão autorizada: vaModel inicial e Falcor na paginação, com identidade e total conferidos. Foram salvos 557 eventos de R e 691 de Gabriela, sem aumento ao repetir o sync, inclusive na VPS após restaurar o banco. Sessão expirada marca `needs_login`; mudança de parser registra erro sem marcar sync bem-sucedido. O token TMDB fica somente nas variáveis privadas do backend/worker; o catálogo foi enriquecido e os testes continuam usando HTTP controlado. A interface `AssistedExtractor` fica preparada para injeção futura, com página sanitizada e saída validada no mesmo schema dos eventos. Não há dependência de Trakt, Simkl nem de serviço de terceiros para coleta.
 
-Dados a informar antes do deploy na VPS: SO e recursos da VPS, instalação atual do Docker/proxy, domínio, outros streamings e perfis que cada pessoa usa. A coleta local funciona sem esses dados.
+O deploy atual usa o domínio HTTPS fornecido pelo EasyPanel. Outros streamings e domínio próprio ficam para uma próxima entrega.
 
 ## Referências técnicas
 
