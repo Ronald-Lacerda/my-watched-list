@@ -45,3 +45,5 @@ Gate: Build
 - Build: npm --prefix web run build e .local/checks.py full quick vet build.
 - Antes dos commits: validate_spec.py, validate_tasks.py, check_commit.py e git diff --check.
 - Fechamento: Verifier independente após último commit, validate_state.py e CI verde no HEAD do PR.
+
+Revisão independente PASS até 0b88e89: 7/7 critérios, oito mutantes compilados e mortos, Full/Quick/vet/build e build web passaram. Relatório em validation.md. Conferência do app real com sessão preservada: 193 itens agrupados, mantendo os 1248 eventos no banco.

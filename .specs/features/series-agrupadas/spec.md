@@ -39,6 +39,6 @@ Agrupar filmes, unir catálogos de streamings diferentes, mudar notas existentes
 
 | ID | Critérios | Estado |
 | --- | --- | --- |
-| SAG-01 | 1–3, 6 | implemented |
-| SAG-02 | 4–5 | implemented |
-| SAG-03 | 7 | implemented |
+| SAG-01 | 1–3, 6 | verified |
+| SAG-02 | 4–5 | verified |
+| SAG-03 | 7 | verified |
