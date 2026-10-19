@@ -14,7 +14,7 @@ Where: web
 Depends on: none
 Tests: existing Chromium regressions, visual inspection
 Gate: Full
-- [ ] Alterar estilos, shell e marca para Sessão; alinhar login, conexões e diálogo ao tema; fontes locais licenciadas, metadados e shell PWA. Arquivos: web/src/style.css, app.css, App.tsx, icons.tsx, AuthScreen.tsx, Connections.tsx, RatingDialog.tsx (somente apresentação), web/index.html, web/public/manifest.webmanifest, web/public/fonts/*, web/vite.config.ts. AC1/7/8. Preservar rótulos, ações e asserções existentes. Conferir build e todos os testes Chromium existentes antes de commitar.
+- [x] Alterar estilos, shell e marca para Sessão; alinhar login, conexões e diálogo ao tema; fontes locais licenciadas, metadados e shell PWA. Arquivos: web/src/style.css, app.css, App.tsx, icons.tsx, AuthScreen.tsx, Connections.tsx, RatingDialog.tsx (somente apresentação), web/index.html, web/public/manifest.webmanifest, web/public/fonts/*, web/vite.config.ts, api/internal/httpapi/pwa_browser_integration_test.go e session_pwa_integration_test.go. AC1/7/8. Build web e cinco fluxos Chromium passaram: Authentication, JournalAndIndividualRatings, PaginationAndRecovery, PWAOfflinePrivacy e SessionLocalFonts. Rebuild e Authentication repetidos após incluir link de salto de teclado. O novo teste exige fontes locais no cache e carregadas após reload offline, tema coerente e color-scheme escuro. A allowlist antiga recebe somente os dois novos WOFF2 públicos; a verificação de nenhum dado privado permanece. Journal/Poster aguardam T2; não foram alterados nesta tarefa.
 
 ### T2: histórico com destaque cinematográfico e fallback
 Where: web/src
@@ -45,3 +45,13 @@ Gate: Build
 - Full: `npm --prefix web run build` e `go test -tags=integration -count=1 ./api/internal/httpapi` com TEST_DATABASE_URL do banco sintético 55432.
 - Build: build web, Full/Quick Go, go vet e go build; execução serial no Windows com GOMAXPROCS=2, GOFLAGS=-p=1 e GOMEMLIMIT=512MiB.
 - Validadores: validate_spec.py, validate_tasks.py, check_commit.py antes de cada commit e validate_state.py após revisão independente.
+
+## Evidência por tarefa
+
+| Tarefa / critério | Asserção ou inspeção | Resultado |
+| --- | --- | --- |
+| T1 / AC1 | browser_integration_test.go:113 login/ativação/logout; journal_browser_integration_test.go:61 notas e conexões | Mesmos contratos e valores anteriores |
+| T1 / AC8 | session_pwa_integration_test.go:37 tema/meta/scheme, :48 fonte exata no cache, :83 fontes carregadas após reload offline | Shell local e tema coerentes |
+| T1 / privacidade | pwa_browser_integration_test.go:67 rejeita paths fora da allowlist; :87 exige zero notas após tentativa offline | Asserções preservadas, só dois assets públicos acrescentados |
+
+Os testes novos de T1 mapeiam exclusivamente AC8. As verificações cosméticas são inspeções, sem testes que espelham regras CSS.
