@@ -55,6 +55,8 @@ type Item struct {
 	Overview    string     `json:"overview"`
 	Genres      []string   `json:"genres"`
 	RatingKey   *string    `json:"rating_key"`
+	People      []Person   `json:"people"`
+	WatchCount  int        `json:"watch_count"`
 	RatingSummary
 }
 type History struct {
@@ -130,10 +132,18 @@ const historyBase = `WITH base AS (
  WHEN e.media_type_hint<>'tv' AND nullif(e.source_title_id,'') IS NOT NULL THEN a.service||':work:'||e.source_title_id ELSE NULL END AS rating_key
  FROM watch_events e JOIN streaming_accounts a ON a.id=e.streaming_account_id JOIN users u ON u.id=e.user_id LEFT JOIN titles t ON t.id=e.title_id
  WHERE ($1::uuid IS NULL OR e.user_id=$1::uuid) AND ($2::text IS NULL OR a.service=$2) AND ($3::date IS NULL OR e.watched_on >= $3::date) AND ($4::date IS NULL OR e.watched_on <= $4::date)
+), identified AS (
+ SELECT b.*,CASE WHEN $7::bool AND b.display_type='tv' AND b.rating_key IS NOT NULL THEN b.rating_key ELSE b.id::text END AS list_key FROM base b
 ), personal AS (
  SELECT b.*,EXISTS(SELECT 1 FROM ratings r WHERE r.user_id=$5::uuid AND (r.source_key=b.rating_key OR r.title_id=b.title_id)) AS is_rated,
- row_number() OVER(PARTITION BY coalesce(b.rating_key,b.id::text) ORDER BY b.watched_on DESC,b.id DESC) AS work_rank FROM base b
-), filtered AS (SELECT * FROM personal WHERE NOT $6::bool OR (rating_key IS NOT NULL AND NOT is_rated AND work_rank=1)) `
+ row_number() OVER(PARTITION BY coalesce(b.rating_key,b.id::text) ORDER BY b.watched_on DESC,b.id DESC) AS work_rank,
+ row_number() OVER(PARTITION BY b.list_key ORDER BY b.watched_on DESC,b.id DESC) AS list_rank FROM identified b
+), filtered AS (
+ SELECT * FROM personal WHERE list_rank=1 AND (NOT $6::bool OR (rating_key IS NOT NULL AND NOT is_rated AND work_rank=1))
+), summaries AS (
+ SELECT list_key,sum(events)::int AS watch_count,jsonb_agg(jsonb_build_object('id',user_id::text,'name',person) ORDER BY lower(person),user_id) AS people
+ FROM (SELECT list_key,user_id,person,count(*) AS events FROM identified GROUP BY list_key,user_id,person) members GROUP BY list_key
+) `
 
 func nullable(value string) any {
 	if value == "" {
@@ -151,7 +161,7 @@ func dateValue(value string) any {
 
 func (s Store) History(ctx context.Context, actor string, q Query) (History, error) {
 	result := History{Items: []Item{}}
-	args := []any{nullable(q.Person), nullable(q.Service), dateValue(q.From), dateValue(q.To), actor, q.Pending}
+	args := []any{nullable(q.Person), nullable(q.Service), dateValue(q.From), dateValue(q.To), actor, q.Pending, q.GroupSeries}
 	tx, err := s.Pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
 		return result, err
@@ -166,21 +176,25 @@ func (s Store) History(ctx context.Context, actor string, q Query) (History, err
 		cursorID = q.cursor.ID
 	}
 	args = append(args, cursorDay, cursorID, q.Limit+1)
-	query := historyBase + `SELECT f.id::text,f.user_id::text,f.person,f.service,f.display_title,f.source_title,f.display_type,f.watched_on::text,f.watched_at,f.poster_path,f.release_year,f.overview,f.genres,f.rating_key,a.*
- FROM filtered f LEFT JOIN LATERAL (` + ratingSelect("f.rating_key", "f.title_id") + `) a ON true
- WHERE ($7::date IS NULL OR (f.watched_on,f.id)<($7::date,$8::uuid)) ORDER BY f.watched_on DESC,f.id DESC LIMIT $9`
+	query := historyBase + `SELECT f.id::text,f.user_id::text,f.person,f.service,f.display_title,f.source_title,f.display_type,f.watched_on::text,f.watched_at,f.poster_path,f.release_year,f.overview,f.genres,f.rating_key,g.people,g.watch_count,a.*
+ FROM filtered f JOIN summaries g ON g.list_key=f.list_key LEFT JOIN LATERAL (` + ratingSelect("f.rating_key", "f.title_id") + `) a ON true
+ WHERE ($8::date IS NULL OR (f.watched_on,f.id)<($8::date,$9::uuid)) ORDER BY f.watched_on DESC,f.id DESC LIMIT $10`
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
 		return result, err
 	}
 	for rows.Next() {
 		var item Item
-		var ratings []byte
-		if err = rows.Scan(&item.ID, &item.PersonID, &item.Person, &item.Service, &item.Title, &item.SourceTitle, &item.MediaType, &item.WatchedOn, &item.WatchedAt, &item.PosterPath, &item.Year, &item.Overview, &item.Genres, &item.RatingKey, &ratings, &item.Average, &item.Count); err != nil {
+		var ratings, people []byte
+		if err = rows.Scan(&item.ID, &item.PersonID, &item.Person, &item.Service, &item.Title, &item.SourceTitle, &item.MediaType, &item.WatchedOn, &item.WatchedAt, &item.PosterPath, &item.Year, &item.Overview, &item.Genres, &item.RatingKey, &people, &item.WatchCount, &ratings, &item.Average, &item.Count); err != nil {
 			rows.Close()
 			return result, err
 		}
 		if err = json.Unmarshal(ratings, &item.Ratings); err != nil {
+			rows.Close()
+			return result, err
+		}
+		if err = json.Unmarshal(people, &item.People); err != nil {
 			rows.Close()
 			return result, err
 		}

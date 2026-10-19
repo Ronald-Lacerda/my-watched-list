@@ -18,6 +18,7 @@ var ErrInvalid = errors.New("filtro ou paginação inválidos")
 type Query struct {
 	Person, Service, From, To string
 	Pending                   bool
+	GroupSeries               bool
 	Limit                     int
 	cursor                    *position
 }
@@ -35,7 +36,7 @@ func ValidID(id string) bool {
 }
 func ParseQuery(values url.Values) (Query, error) {
 	q := Query{Person: values.Get("person"), Service: values.Get("service"), From: values.Get("from"), To: values.Get("to"), Limit: 50}
-	allowed := map[string]bool{"person": true, "service": true, "from": true, "to": true, "pending": true, "limit": true, "cursor": true}
+	allowed := map[string]bool{"person": true, "service": true, "from": true, "to": true, "pending": true, "group_series": true, "limit": true, "cursor": true}
 	for key, v := range values {
 		if !allowed[key] || len(v) != 1 {
 			return q, ErrInvalid
@@ -62,6 +63,12 @@ func ParseQuery(values url.Values) (Query, error) {
 			return q, ErrInvalid
 		}
 		q.Pending = value == "true"
+	}
+	if value := values.Get("group_series"); value != "" {
+		if value != "true" && value != "false" {
+			return q, ErrInvalid
+		}
+		q.GroupSeries = value == "true"
 	}
 	if value := values.Get("limit"); value != "" {
 		n, err := strconv.Atoi(value)

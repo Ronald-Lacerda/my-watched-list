@@ -6,6 +6,7 @@ export interface WatchItem extends RatingSummary {
   id: string; person_id: string; person: string; service: string; title: string; source_title: string
   media_type: string; watched_on: string; watched_at: string | null; poster_path: string | null
   year: number | null; overview: string; genres: string[]; rating_key: string | null
+  people: Person[]; watch_count: number
 }
 export interface HistoryResult { items: WatchItem[]; total: number; next_cursor: string | null }
 export interface FilterOptions { people: Person[]; services: string[] }

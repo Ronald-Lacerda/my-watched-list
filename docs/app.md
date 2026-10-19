@@ -4,7 +4,7 @@ A Fase 2 oferece histórico compartilhado, filtros por pessoa/streaming/período
 
 ## Visual Sessão
 
-O app usa o tema escuro Sessão, com navegação superior no desktop e inferior no celular. O primeiro registro da seleção atual aparece em destaque, com pessoa, dia, streaming, notas individuais e média. Os demais continuam organizados por dia. Cada registro conserva sua identidade: assistidas de pessoas diferentes e episódios não são reunidos em um evento artificial.
+O app usa o tema escuro Sessão, com navegação superior no desktop e inferior no celular. O primeiro item da seleção atual aparece em destaque, com participantes, dia, streaming, notas individuais e média. Os demais continuam organizados por dia. Filmes conservam cada assistida; séries são apresentadas uma vez por obra e streaming, com os episódios originais preservados no banco.
 
 Os filtros e as datas continuam no endereço e combinam entre si. Carregar mais mantém o destaque e acrescenta registros ao histórico. O destaque de pendentes também respeita a pessoa logada e os filtros; dar nota zero conta como avaliação.
 
@@ -20,6 +20,25 @@ docker compose --env-file .env -f deploy/compose.yaml up -d --no-deps web
 ```
 
 Recarregue a página depois da atualização. O novo shell tem uma versão própria de cache e preserva o login existente. O redesign não exige migration, nova coleta, redefinição de senha ou novo convite.
+
+## Séries na lista principal
+
+Cada série aparece uma vez por streaming, mesmo quando as duas pessoas assistiram a vários episódios. O card mostra quem assistiu, a última data e a quantidade de registros dentro do recorte atual. A quantidade conta assistidas registradas, incluindo reassistidas; não representa episódios únicos nem progresso da temporada.
+
+Pessoa, streaming e datas são filtrados antes do agrupamento. Ao selecionar só Gabriela, por exemplo, a data e a quantidade usam apenas as assistidas dela nesse período. O grupo fica no dia da última assistida desse recorte; carregar mais não repete a série. Filmes continuam aparecendo por assistida.
+
+Uma nota vale para a série inteira, por pessoa, incluindo episódios futuros e reassistidas no mesmo streaming. As notas já existentes são mantidas; não é preciso avaliar novamente. O formulário explicita esse alcance. Remover a própria avaliação preserva a da outra pessoa e devolve a série aos seus pendentes.
+
+O agrupamento usa a identidade confiável da obra no streaming, sem exigir TMDB e sem unir séries apenas pelo nome. Catálogos de serviços diferentes continuam separados. Séries antigas sem essa identidade permanecem visíveis com “Aguardando atualização”; sincronize a conexão para preencher o vínculo com segurança.
+
+O app consulta `GET /api/history?group_series=true`. A API retorna `people` (participantes do recorte) e `watch_count` (quantidade de registros), além dos campos anteriores; `id` continua sendo o evento mais recente que representa o item. Sem essa opção ou com `group_series=false`, a API preserva a leitura por evento. A agregação acontece antes do cursor e do total. Nenhum episódio é excluído ou alterado.
+
+Para atualizar essa funcionalidade em uma instalação já saudável, sem recriar worker ou banco e sem executar migrations:
+
+```sh
+docker compose --env-file .env -f deploy/compose.yaml build api web
+docker compose --env-file .env -f deploy/compose.yaml up -d --no-deps --wait api web
+```
 
 ## Usernames e primeiro acesso
 
@@ -60,7 +79,7 @@ O padrão de origem é `http://127.0.0.1:8080`; a primeira origem configurada é
 
 ## Histórico e notas
 
-- **Histórico:** eventos mais recentes primeiro, 50 por página. Datas inicial e final incluem o dia selecionado. Os filtros se combinam e ficam no endereço; “Limpar filtros” volta ao histórico completo. A data original do streaming é preservada, sem inventar horário.
+- **Histórico:** itens mais recentes primeiro, 50 por página, com séries agrupadas antes da paginação. Datas inicial e final incluem o dia selecionado. Os filtros se combinam e ficam no endereço; “Limpar filtros” volta ao histórico completo. A data original do streaming é preservada, sem inventar horário.
 - **Dar minha nota:** aceite de 0 a 10 em passos de 0,5, com comentário opcional de até 2000 caracteres Unicode. Zero é uma nota válida. É possível editar e remover somente a própria avaliação.
 - **Média:** usa as notas disponíveis, com contador. Uma nota 0 e outra 10 dão média 5. Uma única nota dá média igual a ela. A série inteira recebe uma nota por pessoa, compartilhada entre episódios e reassistidas daquele serviço.
 - **Para avaliar:** uma ocorrência por obra sem nota da pessoa logada. A nota da outra pessoa não remove a sua pendência.
