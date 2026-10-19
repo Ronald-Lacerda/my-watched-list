@@ -41,4 +41,4 @@ Agrupar filmes, unir catálogos de streamings diferentes, mudar notas existentes
 | --- | --- | --- |
 | SAG-01 | 1–3, 6 | implemented |
 | SAG-02 | 4–5 | implemented |
-| SAG-03 | 7 | pending |
+| SAG-03 | 7 | implemented |

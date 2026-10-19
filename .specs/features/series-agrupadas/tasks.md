@@ -24,11 +24,11 @@ Gate: Build
 - [x] Solicitar group_series, apresentar participantes/última assistida/quantidade e explicar nota da série; atualizar expectativas de contagem afetadas sem enfraquecer regressões. SAG-02, AC4–5. TestBrowserGroupedSeriesAndRatings falhou antes da mudança por exibir os dois episódios; passou após implementar. Build web e Full/Quick/vet/build Go passaram. Regressões passam com 5 itens em vez de 6 e 60 em vez de 61, pois Série A agora ocupa uma entrada. Asserções de notas, privacidade, filtros e foco preservadas; captura de 320 px inspecionada.
 
 ### T3: documentar e atualizar app local
-Where: docs/app.md, .specs/STATE.md e operação local
+Where: documentação e operação local
 Depends on: T2
 Tests: build Compose API/web e smoke/preservação de dados; validadores de spec/tasks
 Gate: Build
-- [ ] Documentar escolhas, atualizar somente API/web sem migrations, validar preservação e revisar independentemente antes do PR/CI. SAG-03, AC7.
+- [x] Documentar escolhas em docs/app.md e .specs/STATE.md, atualizar somente API/web sem migrations e validar preservação. SAG-03, AC7. Compose build/up --no-deps --wait passou, prontidão e assets conferidos. Snapshot em memória preservou contas/credenciais, sessões, 1248 eventos, 142 títulos e zero notas; demais containers mantidos. docs/netflix.md corrige o estado antigo do TMDB após validação real anterior. Revisão independente após este commit, PR/CI antes de marcar pronto.
 
 ## Test Coverage Matrix
 
