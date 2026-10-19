@@ -8,7 +8,7 @@ O app usa o tema escuro Sessão, com navegação superior no desktop e inferior 
 
 Os filtros e as datas continuam no endereço e combinam entre si. Carregar mais mantém o destaque e acrescenta registros ao histórico. O destaque de pendentes também respeita a pessoa logada e os filtros; dar nota zero conta como avaliação.
 
-Quando há metadados TMDB, o destaque usa o pôster da obra. Sem pôster ou com falha ao carregar, aparece arte abstrata local; título, pessoa, serviço, dia e notas continuam disponíveis. Nenhuma imagem ou avaliação de exemplo da proposta visual é incluída no produto. Configurar o token TMDB continua opcional e segue o [guia Netflix](netflix.md).
+Quando há metadados oficiais, o destaque usa a imagem da obra. O [guia de metadados](metadados.md) descreve sinopses nos cards, correção de identificação e fallback público da Netflix. Sem pôster ou com falha ao carregar, aparece arte abstrata local; título, pessoa, serviço, dia e notas continuam disponíveis. Nenhuma imagem ou avaliação de exemplo da proposta visual é incluída no produto. Configurar o token TMDB continua opcional e segue o [guia Netflix](netflix.md).
 
 DM Sans e Barlow Condensed são servidas pelo próprio app e incluídas no shell offline. Os arquivos WOFF2 e licenças SIL Open Font License ficam em `web/public/fonts`; fontes de origem: [Google Fonts](https://github.com/google/fonts). O navegador não consulta Google Fonts em tempo de execução. O cache continua limitado a arquivos públicos e não guarda o histórico, as notas ou a sessão.
 

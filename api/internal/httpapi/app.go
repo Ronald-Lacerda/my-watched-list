@@ -19,12 +19,18 @@ import (
 
 const SessionCookie = "mwl_session"
 
-type Options struct{ Origins []string }
+type Options struct {
+	Origins         []string
+	Metadata        MetadataClient
+	NetflixMetadata NetflixMetadataClient
+}
 type app struct {
-	auth    auth.Service
-	pool    *pgxpool.Pool
-	origins map[string]bool
-	secure  bool
+	auth            auth.Service
+	pool            *pgxpool.Pool
+	origins         map[string]bool
+	secure          bool
+	metadata        MetadataClient
+	netflixMetadata NetflixMetadataClient
 }
 type userKey struct{}
 
@@ -33,7 +39,7 @@ func NewApp(pool *pgxpool.Pool, options Options) (http.Handler, error) {
 	if len(origins) == 0 || (len(origins) == 1 && strings.TrimSpace(origins[0]) == "") {
 		origins = []string{"http://127.0.0.1:8080", "http://localhost:8080"}
 	}
-	a := &app{auth: auth.Service{Pool: pool}, pool: pool, origins: map[string]bool{}}
+	a := &app{auth: auth.Service{Pool: pool}, pool: pool, origins: map[string]bool{}, metadata: options.Metadata, netflixMetadata: options.NetflixMetadata}
 	var scheme string
 	for _, origin := range origins {
 		origin = strings.TrimRight(strings.TrimSpace(origin), "/")
@@ -55,6 +61,8 @@ func NewApp(pool *pgxpool.Pool, options Options) (http.Handler, error) {
 	r.With(a.requireUser).Get("/api/connections", a.connections)
 	r.With(a.requireUser).Put("/api/events/{id}/rating", a.rating)
 	r.With(a.requireUser).Delete("/api/events/{id}/rating", a.rating)
+	r.With(a.requireUser).Get("/api/metadata/search", a.searchMetadata)
+	r.With(a.requireUser).Put("/api/events/{id}/metadata", a.confirmMetadata)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		apiError(w, 404, "not_found", "Não encontramos esta página.")
 	})

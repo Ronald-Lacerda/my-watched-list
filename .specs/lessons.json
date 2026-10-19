@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 12,
+  "next_id": 14,
   "lessons": [
     {
       "id": "L-001",
@@ -203,6 +203,42 @@
       ],
       "created": "2026-10-19T00:39:36Z",
       "last_seen": "2026-10-19T00:39:36Z"
+    },
+    {
+      "id": "L-012",
+      "key": "ac_gap::verifique a unicidade entre nomes canonicos e aliases de todos os candidatos antes de associar uma obra automaticamente",
+      "text": "Verifique a unicidade entre nomes canônicos e aliases de todos os candidatos antes de associar uma obra automaticamente.",
+      "signal": "ac_gap",
+      "scope": "metadados",
+      "status": "candidate",
+      "features": [
+        "capas-sinopses"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AC1 (metadados)"
+      ],
+      "created": "2026-10-19T02:05:30Z",
+      "last_seen": "2026-10-19T02:05:30Z"
+    },
+    {
+      "id": "L-013",
+      "key": "ac_gap::inclua o tipo da identificacao persistida ao validar mudancas de metadados mesmo quando a coleta nao contem uma pista de tipo",
+      "text": "Inclua o tipo da identificação persistida ao validar mudanças de metadados, mesmo quando a coleta não contém uma pista de tipo.",
+      "signal": "ac_gap",
+      "scope": "catalogo",
+      "status": "candidate",
+      "features": [
+        "capas-sinopses"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AC3 (catalogo)"
+      ],
+      "created": "2026-10-19T02:05:31Z",
+      "last_seen": "2026-10-19T02:05:31Z"
     }
   ]
 }

@@ -1,10 +1,9 @@
-package tmdb
+package metadata
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"mywatchedlist/worker/collector"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -53,7 +52,7 @@ func TestMatch(t *testing.T) {
 			defer srv.Close()
 			c := New("synthetic-token")
 			c.baseURL = srv.URL
-			e := collector.Event{MatchTitle: "Teste", MediaType: "movie"}
+			e := MatchInput{MatchTitle: "Teste", MediaType: "movie"}
 			if mode == "tv" {
 				e.MediaType = "tv"
 				season, episode := 1, 2
@@ -108,6 +107,10 @@ func TestConservativeMatching(t *testing.T) {
 					}
 					return
 				}
+				if strings.HasSuffix(r.URL.Path, "/alternative_titles") {
+					fmt.Fprint(w, `{"id":1,"titles":[],"results":[]}`)
+					return
+				}
 				if mode == "inexact" || mode == "unknown_ambiguous" {
 					t.Error("candidato não resolvido não deve buscar detalhes")
 				}
@@ -133,7 +136,7 @@ func TestConservativeMatching(t *testing.T) {
 			defer srv.Close()
 			c := New("synthetic-token")
 			c.baseURL = srv.URL
-			e := collector.Event{MatchTitle: "Teste", MediaType: "movie"}
+			e := MatchInput{MatchTitle: "Teste", MediaType: "movie"}
 			if strings.HasPrefix(mode, "episode_") {
 				e.MediaType = "tv"
 				season, episode := 1, 2

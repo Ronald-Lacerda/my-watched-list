@@ -6,6 +6,8 @@ import (
 	"errors"
 	"github.com/robfig/cron/v3"
 	"log/slog"
+	"mywatchedlist/internal/catalogstore"
+	"mywatchedlist/internal/metadata"
 	"mywatchedlist/internal/session"
 	"mywatchedlist/worker/collector"
 	"mywatchedlist/worker/netflix"
@@ -21,10 +23,13 @@ type Matcher interface {
 	Match(context.Context, collector.Event) (store.Title, error)
 }
 type Runner struct {
-	Store   store.Store
-	Cipher  *session.Cipher
-	Fetcher Fetcher
-	Matcher Matcher
+	Store           store.Store
+	Cipher          *session.Cipher
+	Fetcher         Fetcher
+	Matcher         Matcher
+	NetflixMetadata interface {
+		Lookup(context.Context, string) (metadata.NetflixTitle, error)
+	}
 }
 
 func Failure(err error) (string, string) {
@@ -67,41 +72,104 @@ func (r Runner) Sync(ctx context.Context, a store.Account) error {
 	if _, err = lease.Save(ctx, a, batch.Events, sealed); err != nil {
 		return r.fail(ctx, lease, a.ID, err)
 	}
-	if r.Matcher != nil {
-		pending, err := lease.Pending(ctx, a.ID)
-		if err != nil {
-			return err
-		}
-		for _, p := range pending {
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-			title, e := r.Matcher.Match(ctx, p.Event)
-			if e != nil {
-				state := "pending"
-				if errors.Is(e, tmdb.ErrNotFound) {
-					state = "not_found"
-				}
-				if errors.Is(e, tmdb.ErrAmbiguous) {
-					state = "ambiguous"
-				}
-				if err = lease.DeferMatch(ctx, p.ID, state); err != nil {
-					return err
-				}
-				if state == "pending" {
-					slog.Warn("enriquecimento adiado", "código", "tmdb_unavailable")
-					break
-				}
-				continue
-			}
-			if err = lease.Link(ctx, p, title); err != nil {
-				return err
-			}
-		}
+	if err = r.enrich(ctx, lease, a, false); err != nil {
+		return err
 	}
 	slog.Info("sincronização concluída", "conexão", a.ID, "eventos_recebidos", len(batch.Events))
 	return nil
 }
+func (r Runner) enrich(ctx context.Context, lease *store.Lease, a store.Account, retry bool) error {
+	if r.Matcher == nil {
+		return nil
+	}
+	var err error
+	pending, err := lease.PendingRetry(ctx, a.ID, retry)
+	if err != nil {
+		return err
+	}
+	for _, p := range pending {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if applied, err := lease.ApplyOverride(ctx, p.ID); err != nil {
+			return err
+		} else if applied {
+			continue
+		}
+		title, e := r.Matcher.Match(ctx, p.Event)
+		if e != nil {
+			if (errors.Is(e, tmdb.ErrNotFound) || errors.Is(e, tmdb.ErrAmbiguous)) && r.NetflixMetadata != nil {
+				source := p.Event.SourceWorkID
+				if source == "" && p.Event.MediaType != "tv" {
+					source = p.Event.SourceTitleID
+				}
+				if source != "" {
+					if official, lookupErr := r.NetflixMetadata.Lookup(ctx, source); lookupErr == nil && official.PosterURL != "" && official.Overview != "" {
+						if err = catalogstore.ConfirmNetflix(ctx, r.Store.Pool, p.ID, "", official); err != nil {
+							return err
+						}
+						continue
+					}
+				}
+			}
+			state := "pending"
+			if errors.Is(e, tmdb.ErrNotFound) {
+				state = "not_found"
+			}
+			if errors.Is(e, tmdb.ErrAmbiguous) {
+				state = "ambiguous"
+			}
+			if err = lease.DeferMatch(ctx, p.ID, state); err != nil {
+				return err
+			}
+			if state == "pending" {
+				slog.Warn("enriquecimento adiado", "código", "tmdb_unavailable")
+				break
+			}
+			continue
+		}
+		if err = lease.Link(ctx, p, title); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Enrich processa somente registros existentes, inclusive conexões sem sessão.
+// Não abre navegador nem altera status, cookies ou timestamps da coleta.
+func (r Runner) Enrich(ctx context.Context, onlyID string, retry bool) error {
+	if r.Matcher == nil {
+		return errors.New("TMDB_READ_ACCESS_TOKEN obrigatório para enrich")
+	}
+	accounts, err := r.Store.Accounts(ctx, true)
+	if err != nil {
+		return errors.New("falha ao listar conexões")
+	}
+	found := onlyID == ""
+	for _, a := range accounts {
+		if onlyID != "" && a.ID != onlyID {
+			continue
+		}
+		found = true
+		lease, err := r.Store.Lock(ctx, a.ID)
+		if errors.Is(err, store.ErrBusy) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		err = r.enrich(ctx, lease, a, retry)
+		lease.Close()
+		if err != nil {
+			return err
+		}
+	}
+	if !found {
+		return errors.New("conexão não encontrada")
+	}
+	return nil
+}
+
 func (r Runner) fail(ctx context.Context, l *store.Lease, id string, cause error) error {
 	if ctx.Err() != nil {
 		return ctx.Err()

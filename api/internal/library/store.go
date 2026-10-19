@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mywatchedlist/internal/catalogstore"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -41,22 +42,25 @@ type RatingSummary struct {
 	Count   int      `json:"ratings_count"`
 }
 type Item struct {
-	ID          string     `json:"id"`
-	PersonID    string     `json:"person_id"`
-	Person      string     `json:"person"`
-	Service     string     `json:"service"`
-	Title       string     `json:"title"`
-	SourceTitle string     `json:"source_title"`
-	MediaType   string     `json:"media_type"`
-	WatchedOn   string     `json:"watched_on"`
-	WatchedAt   *time.Time `json:"watched_at"`
-	PosterPath  *string    `json:"poster_path"`
-	Year        *int       `json:"year"`
-	Overview    string     `json:"overview"`
-	Genres      []string   `json:"genres"`
-	RatingKey   *string    `json:"rating_key"`
-	People      []Person   `json:"people"`
-	WatchCount  int        `json:"watch_count"`
+	ID               string     `json:"id"`
+	PersonID         string     `json:"person_id"`
+	Person           string     `json:"person"`
+	Service          string     `json:"service"`
+	Title            string     `json:"title"`
+	SourceTitle      string     `json:"source_title"`
+	MediaType        string     `json:"media_type"`
+	WatchedOn        string     `json:"watched_on"`
+	WatchedAt        *time.Time `json:"watched_at"`
+	PosterPath       *string    `json:"poster_path"`
+	PosterURL        string     `json:"poster_url"`
+	MetadataProvider string     `json:"metadata_provider"`
+	OverviewLanguage string     `json:"overview_language"`
+	Year             *int       `json:"year"`
+	Overview         string     `json:"overview"`
+	Genres           []string   `json:"genres"`
+	RatingKey        *string    `json:"rating_key"`
+	People           []Person   `json:"people"`
+	WatchCount       int        `json:"watch_count"`
 	RatingSummary
 }
 type History struct {
@@ -126,11 +130,12 @@ func ratingSelect(key, title string) string {
 }
 
 const historyBase = `WITH base AS (
- SELECT e.*,a.service,u.name AS person,coalesce(t.title,CASE WHEN e.media_type_hint='tv' AND e.match_title<>'' THEN e.match_title ELSE e.source_title END) AS display_title,
- coalesce(t.media_type,nullif(e.media_type_hint,''),'unknown') AS display_type,t.poster_path,t.release_year,coalesce(t.overview,'') AS overview,coalesce(t.genres,'{}'::text[]) AS genres,
+ SELECT e.*,a.service,u.name AS person,coalesce(nullif(o.display_title,''),t.title,CASE WHEN e.media_type_hint='tv' AND e.match_title<>'' THEN e.match_title ELSE e.source_title END) AS display_title,
+ coalesce(o.media_type,t.media_type,nullif(e.media_type_hint,''),'unknown') AS display_type,t.poster_path,t.release_year,coalesce(nullif(o.overview,''),t.overview,'') AS overview,coalesce(t.genres,'{}'::text[]) AS genres,
+ coalesce(o.poster_url,'') AS poster_url,coalesce(o.provider,CASE WHEN t.id IS NOT NULL THEN 'tmdb' ELSE '' END) AS metadata_provider,CASE WHEN o.overview<>'' THEN o.overview_language ELSE coalesce(t.overview_language,'') END AS overview_language,
  CASE WHEN e.source_work_id<>'' THEN a.service||':work:'||e.source_work_id
  WHEN e.media_type_hint<>'tv' AND nullif(e.source_title_id,'') IS NOT NULL THEN a.service||':work:'||e.source_title_id ELSE NULL END AS rating_key
- FROM watch_events e JOIN streaming_accounts a ON a.id=e.streaming_account_id JOIN users u ON u.id=e.user_id LEFT JOIN titles t ON t.id=e.title_id
+ FROM watch_events e JOIN streaming_accounts a ON a.id=e.streaming_account_id JOIN users u ON u.id=e.user_id LEFT JOIN metadata_overrides o ON o.source_key=(` + catalogstore.SourceKey + `) LEFT JOIN titles t ON t.id=coalesce(o.title_id,e.title_id)
  WHERE ($1::uuid IS NULL OR e.user_id=$1::uuid) AND ($2::text IS NULL OR a.service=$2) AND ($3::date IS NULL OR e.watched_on >= $3::date) AND ($4::date IS NULL OR e.watched_on <= $4::date)
 ), identified AS (
  SELECT b.*,CASE WHEN $7::bool AND b.display_type='tv' AND b.rating_key IS NOT NULL THEN b.rating_key ELSE b.id::text END AS list_key FROM base b
@@ -176,7 +181,7 @@ func (s Store) History(ctx context.Context, actor string, q Query) (History, err
 		cursorID = q.cursor.ID
 	}
 	args = append(args, cursorDay, cursorID, q.Limit+1)
-	query := historyBase + `SELECT f.id::text,f.user_id::text,f.person,f.service,f.display_title,f.source_title,f.display_type,f.watched_on::text,f.watched_at,f.poster_path,f.release_year,f.overview,f.genres,f.rating_key,g.people,g.watch_count,a.*
+	query := historyBase + `SELECT f.id::text,f.user_id::text,f.person,f.service,f.display_title,f.source_title,f.display_type,f.watched_on::text,f.watched_at,f.poster_path,f.release_year,f.overview,f.genres,f.rating_key,g.people,g.watch_count,f.poster_url,f.metadata_provider,f.overview_language,a.*
  FROM filtered f JOIN summaries g ON g.list_key=f.list_key LEFT JOIN LATERAL (` + ratingSelect("f.rating_key", "f.title_id") + `) a ON true
  WHERE ($8::date IS NULL OR (f.watched_on,f.id)<($8::date,$9::uuid)) ORDER BY f.watched_on DESC,f.id DESC LIMIT $10`
 	rows, err := tx.Query(ctx, query, args...)
@@ -186,7 +191,7 @@ func (s Store) History(ctx context.Context, actor string, q Query) (History, err
 	for rows.Next() {
 		var item Item
 		var ratings, people []byte
-		if err = rows.Scan(&item.ID, &item.PersonID, &item.Person, &item.Service, &item.Title, &item.SourceTitle, &item.MediaType, &item.WatchedOn, &item.WatchedAt, &item.PosterPath, &item.Year, &item.Overview, &item.Genres, &item.RatingKey, &people, &item.WatchCount, &ratings, &item.Average, &item.Count); err != nil {
+		if err = rows.Scan(&item.ID, &item.PersonID, &item.Person, &item.Service, &item.Title, &item.SourceTitle, &item.MediaType, &item.WatchedOn, &item.WatchedAt, &item.PosterPath, &item.Year, &item.Overview, &item.Genres, &item.RatingKey, &people, &item.WatchCount, &item.PosterURL, &item.MetadataProvider, &item.OverviewLanguage, &ratings, &item.Average, &item.Count); err != nil {
 			rows.Close()
 			return result, err
 		}

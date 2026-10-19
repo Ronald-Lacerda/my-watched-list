@@ -42,7 +42,7 @@ func records(t *testing.T, p pw.Page, count int) {
 func eventCard(p pw.Page, id string) pw.Locator { return p.Locator(`[data-event-id="` + id + `"]`) }
 func openRating(t *testing.T, p pw.Page, id string) {
 	t.Helper()
-	if err := eventCard(p, id).GetByRole("button").Click(); err != nil {
+	if err := eventCard(p, id).Locator(".rating-button").Click(); err != nil {
 		t.Fatal(err)
 	}
 	visible(t, p.GetByRole("dialog"))
@@ -85,7 +85,7 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitJS(t, p, `()=>!document.querySelector('dialog')`)
-	focused, err := eventCard(p, b.ids[0]).GetByRole("button").Evaluate(`e=>e===document.activeElement`, nil)
+	focused, err := eventCard(p, b.ids[0]).Locator(".rating-button").Evaluate(`e=>e===document.activeElement`, nil)
 	if err != nil || focused != true {
 		t.Fatal("Escape não devolveu foco", err)
 	}
