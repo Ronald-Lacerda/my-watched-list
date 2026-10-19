@@ -10,11 +10,11 @@ flowchart LR
 ## Task Breakdown
 
 ### T1: cliente TMDB compartilhado e aliases
-Where: internal/metadata e worker/tmdb
+Where: clientes de metadados e adaptador do worker
 Depends on: none
 Tests: unitários atuais preservados, aliases/normalização/ambiguidade/fallback/erros e busca/detalhes
 Gate: Full
-- [ ] Compartilhar cliente e modelos, reconhecer aliases oficiais equivalentes e expor Search/Details; sem associação por aproximação ou prefixo. CMS-01, AC1–2.
+- [x] Compartilhar cliente e modelos, reconhecer aliases oficiais equivalentes e expor Search/Details; sem associação por aproximação ou prefixo. Cliente público Netflix isolado para exceção autorizada pelo usuário, com identidade/host e conteúdo validados. CMS-01, AC1–2.
 
 ### T2: associação durável e enriquecimento independente
 Where: armazenamento e worker
@@ -45,6 +45,8 @@ Gate: Build
 - [ ] Documentar, fazer backup validado, implantar e reprocessar metadados; completar associações comprovadas e relatar limitações. CMS-04, AC8–9. Revisão independente após último commit, PR separado e CI verde.
 
 ## Test Coverage Matrix
+
+T1: Full passou em banco sintético e Chromium, sem exclusão de casos anteriores. Evidência e mapeamento direto/reverso: AC1 → aliases_test.go:82/86/90/93 (alias único, ambiguidade, aproximação e truncamento); AC2 → aliases_test.go:123/127/159 (campos, idioma e falhas), netflix_test.go:54/73/112/128/173/196 (identidade, fallback GB, página genérica, CDN, erros e entrada/cancelamento sem HTTP). Todos pertencem a CMS-01; asserções conferem dados retornados além das chamadas. Os testes antigos foram movidos junto do cliente, mantendo seus resultados esperados.
 
 | Camada | Cobertura |
 | --- | --- |

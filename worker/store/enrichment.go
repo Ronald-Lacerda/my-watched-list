@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"mywatchedlist/internal/metadata"
 	"mywatchedlist/worker/collector"
 )
 
@@ -9,15 +10,7 @@ type PendingEvent struct {
 	ID    string
 	Event collector.Event
 }
-type Title struct {
-	TMDBID                                      int64
-	MediaType, Name, Original, Overview, Poster string
-	Year, Runtime                               *int
-	Genres                                      []string
-	EpisodeValid                                bool
-	EpisodeName                                 string
-	EpisodeRuntime                              *int
-}
+type Title = metadata.Title
 
 func (l *Lease) Pending(ctx context.Context, accountID string) ([]PendingEvent, error) {
 	rows, err := l.Conn.Query(ctx, `SELECT id::text,source_title_id,source_title,match_title,media_type_hint,season_number,episode_number FROM watch_events WHERE streaming_account_id=$1 AND title_id IS NULL AND enrich_after<=now() ORDER BY enrich_after LIMIT 500`, accountID)
