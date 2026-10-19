@@ -58,7 +58,7 @@ func TestBrowserPWAOfflinePrivacy(t *testing.T) {
 		t.Fatal("shell ausente", err, value)
 	}
 	for _, path := range cached {
-		if path != "/index.html" && path != "/manifest.webmanifest" && path != "/favicon.svg" && path != "/icon-192.png" && path != "/icon-512.png" && !strings.HasPrefix(path, "/assets/") {
+		if path != "/index.html" && path != "/manifest.webmanifest" && path != "/favicon.svg" && path != "/icon-192.png" && path != "/icon-512.png" && path != "/fonts/dm-sans-latin.woff2" && path != "/fonts/barlow-condensed-latin.woff2" && !strings.HasPrefix(path, "/assets/") {
 			t.Fatal("dado privado/arquivo inesperado no cache", path)
 		}
 	}
