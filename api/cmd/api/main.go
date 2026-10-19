@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"mywatchedlist/api/internal/httpapi"
 	"mywatchedlist/internal/config"
+	"mywatchedlist/internal/metadata"
 )
 
 func main() {
@@ -35,7 +36,11 @@ func run() error {
 		return errors.New("configuração de banco inválida")
 	}
 	defer pool.Close()
-	handler, err := httpapi.NewApp(pool, httpapi.Options{Origins: strings.Split(os.Getenv("APP_ORIGINS"), ",")})
+	options := httpapi.Options{Origins: strings.Split(os.Getenv("APP_ORIGINS"), ","), NetflixMetadata: metadata.NewNetflix()}
+	if token := os.Getenv("TMDB_READ_ACCESS_TOKEN"); token != "" {
+		options.Metadata = metadata.New(token)
+	}
+	handler, err := httpapi.NewApp(pool, options)
 	if err != nil {
 		return err
 	}

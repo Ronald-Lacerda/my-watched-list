@@ -43,6 +43,7 @@ services:
     environment:
       <<: *app-env
       APP_ORIGINS: ${APP_ORIGINS:-http://127.0.0.1:8080,http://localhost:8080}
+      TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
