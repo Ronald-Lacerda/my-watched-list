@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"mywatchedlist/internal/catalogstore"
 	"mywatchedlist/internal/metadata"
 	"mywatchedlist/worker/collector"
 )
@@ -13,7 +14,10 @@ type PendingEvent struct {
 type Title = metadata.Title
 
 func (l *Lease) Pending(ctx context.Context, accountID string) ([]PendingEvent, error) {
-	rows, err := l.Conn.Query(ctx, `SELECT id::text,source_title_id,source_title,match_title,media_type_hint,season_number,episode_number FROM watch_events WHERE streaming_account_id=$1 AND title_id IS NULL AND enrich_after<=now() ORDER BY enrich_after LIMIT 500`, accountID)
+	return l.PendingRetry(ctx, accountID, false)
+}
+func (l *Lease) PendingRetry(ctx context.Context, accountID string, retry bool) ([]PendingEvent, error) {
+	rows, err := l.Conn.Query(ctx, `SELECT e.id::text,e.source_title_id,e.source_title,e.match_title,e.media_type_hint,e.season_number,e.episode_number,e.source_work_id FROM watch_events e JOIN streaming_accounts a ON a.id=e.streaming_account_id WHERE e.streaming_account_id=$1 AND e.title_id IS NULL AND (e.enrich_after<=now() OR ($2 AND e.enrichment_status IN ('not_found','ambiguous'))) AND NOT EXISTS(SELECT 1 FROM metadata_overrides o WHERE o.source_key=(`+catalogstore.SourceKey+`) AND o.provider='netflix') ORDER BY e.enrich_after,e.id LIMIT 500`, accountID, retry)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +26,7 @@ func (l *Lease) Pending(ctx context.Context, accountID string) ([]PendingEvent, 
 	for rows.Next() {
 		var p PendingEvent
 		var sourceID *string
-		err = rows.Scan(&p.ID, &sourceID, &p.Event.SourceTitle, &p.Event.MatchTitle, &p.Event.MediaType, &p.Event.SeasonNumber, &p.Event.EpisodeNumber)
+		err = rows.Scan(&p.ID, &sourceID, &p.Event.SourceTitle, &p.Event.MatchTitle, &p.Event.MediaType, &p.Event.SeasonNumber, &p.Event.EpisodeNumber, &p.Event.SourceWorkID)
 		if err != nil {
 			return nil, err
 		}
@@ -43,12 +47,16 @@ func (l *Lease) Link(ctx context.Context, p PendingEvent, m Title) error {
 		return err
 	}
 	defer tx.Rollback(context.Background())
-	var titleID string
-	genres := m.Genres
-	if genres == nil {
-		genres = []string{}
+	i, err := catalogstore.LockIdentity(ctx, tx, p.ID)
+	if err != nil {
+		return err
 	}
-	err = tx.QueryRow(ctx, `INSERT INTO titles(tmdb_id,media_type,title,original_title,release_year,overview,poster_path,genres,runtime_minutes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(tmdb_id,media_type) DO UPDATE SET title=excluded.title,original_title=excluded.original_title,release_year=excluded.release_year,overview=excluded.overview,poster_path=excluded.poster_path,genres=excluded.genres,runtime_minutes=excluded.runtime_minutes,enriched_at=now() RETURNING id::text`, m.TMDBID, m.MediaType, m.Name, m.Original, m.Year, m.Overview, m.Poster, genres, m.Runtime).Scan(&titleID)
+	if applied, err := catalogstore.ApplyOverride(ctx, tx, i, p.ID); err != nil {
+		return err
+	} else if applied {
+		return tx.Commit(ctx)
+	}
+	titleID, err := catalogstore.UpsertTitle(ctx, tx, m)
 	if err != nil {
 		return err
 	}
@@ -67,4 +75,21 @@ func (l *Lease) Link(ctx context.Context, p PendingEvent, m Title) error {
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+func (l *Lease) ApplyOverride(ctx context.Context, id string) (bool, error) {
+	tx, err := l.Conn.Begin(ctx)
+	if err != nil {
+		return false, err
+	}
+	defer tx.Rollback(context.Background())
+	i, err := catalogstore.LockIdentity(ctx, tx, id)
+	if err != nil {
+		return false, err
+	}
+	applied, err := catalogstore.ApplyOverride(ctx, tx, i, id)
+	if err != nil {
+		return false, err
+	}
+	return applied, tx.Commit(ctx)
 }

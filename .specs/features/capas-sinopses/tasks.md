@@ -21,7 +21,7 @@ Where: armazenamento e worker
 Depends on: T1
 Tests: PostgreSQL de overrides, concorrência, identidade/dados preservados, CLI enrich e sync existentes
 Gate: Full
-- [ ] Migration aditiva, persistência compartilhada/lock e respeito a override no worker; comando de metadados sem Netflix. CMS-02, AC4–5/7.
+- [x] Migration aditiva, persistência compartilhada/lock e respeito a override no worker; comando de metadados sem Netflix. CMS-02, AC4–5/7.
 
 ### T3: API privada de busca e confirmação
 Where: API e deploy
@@ -47,6 +47,8 @@ Gate: Build
 ## Test Coverage Matrix
 
 T1: Full passou em banco sintético e Chromium, sem exclusão de casos anteriores. Evidência e mapeamento direto/reverso: AC1 → aliases_test.go:82/86/90/93 (alias único, ambiguidade, aproximação e truncamento); AC2 → aliases_test.go:123/127/159 (campos, idioma e falhas), netflix_test.go:54/73/112/128/173/196 (identidade, fallback GB, página genérica, CDN, erros e entrada/cancelamento sem HTTP). Todos pertencem a CMS-01; asserções conferem dados retornados além das chamadas. Os testes antigos foram movidos junto do cliente, mantendo seus resultados esperados.
+
+T2: Full passou. AC4 → internal/catalogstore/store_integration_test.go:46/106/109/118 (duas pessoas, isolamento por obra/serviço, origem e notas 0/10 intactas, complemento sem ID inventado); AC5 → :66/70/86/101/135 (resultado atrasado, episódio futuro, lock concorrente e fallback excluído das pendências); AC7 → worker/syncer/enrich_integration_test.go:33/36/42/45 (backoff, lote 500, 501 eventos e sessão intactos), worker/cmd/worker/enrich_integration_test.go:20/22 (sem navegador/chave). Mapeamento reverso: todos os novos casos pertencem a CMS-02; validações de tipo/ID/CDN também sustentam AC3–4. Nenhum teste antigo removido ou enfraquecido.
 
 | Camada | Cobertura |
 | --- | --- |

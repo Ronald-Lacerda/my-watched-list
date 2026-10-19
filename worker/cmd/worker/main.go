@@ -10,6 +10,7 @@ import (
 	"io"
 	"log/slog"
 	"mywatchedlist/internal/config"
+	"mywatchedlist/internal/metadata"
 	"mywatchedlist/internal/session"
 	"mywatchedlist/worker/netflix"
 	"mywatchedlist/worker/store"
@@ -50,8 +51,8 @@ func runWithBrowser(ctx context.Context, args []string, input io.Reader, output 
 		command = args[0]
 		args = args[1:]
 	}
-	if command != "serve" && command != "sync" && command != "status" && command != "user-add" && command != "login" {
-		return errors.New("comandos: serve, sync, status, user-add, login")
+	if command != "serve" && command != "sync" && command != "enrich" && command != "status" && command != "user-add" && command != "login" {
+		return errors.New("comandos: serve, sync, enrich, status, user-add, login")
 	}
 	flags := flag.NewFlagSet(command, flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
@@ -63,6 +64,7 @@ func runWithBrowser(ctx context.Context, args []string, input io.Reader, output 
 	id := flags.String("connection", "", "UUID da conexão")
 	channel := flags.String("channel", "", "canal do navegador local para login")
 	reuse := flags.String("reuse-connection", "", "reaproveitar autenticação local de outra conexão")
+	retry := flags.Bool("retry-unmatched", false, "repetir identificação não encontrada ou ambígua")
 	if flags.Parse(args) != nil || flags.NArg() != 0 {
 		return errors.New("argumentos inválidos; consulte README")
 	}
@@ -71,7 +73,7 @@ func runWithBrowser(ctx context.Context, args []string, input io.Reader, output 
 		return err
 	}
 	var cipher *session.Cipher
-	if command != "status" && command != "user-add" {
+	if command != "status" && command != "user-add" && command != "enrich" {
 		cipher, err = session.New(os.Getenv("SESSION_ENCRYPTION_KEY"))
 		if err != nil {
 			return err
@@ -159,11 +161,18 @@ func runWithBrowser(ctx context.Context, args []string, input io.Reader, output 
 		fmt.Fprintln(output, "Conexão salva:", connection)
 		return nil
 	}
-	r := syncer.Runner{Store: s, Cipher: cipher, Fetcher: newBrowser(zone, "")}
+	r := syncer.Runner{Store: s, Cipher: cipher}
+	if command != "enrich" {
+		r.Fetcher = newBrowser(zone, "")
+	}
 	if token := os.Getenv("TMDB_READ_ACCESS_TOKEN"); token != "" {
 		r.Matcher = tmdb.New(token)
+		r.NetflixMetadata = metadata.NewNetflix()
 	} else {
 		slog.Warn("TMDB_READ_ACCESS_TOKEN ausente; metadados permanecerão pendentes")
+	}
+	if command == "enrich" {
+		return r.Enrich(ctx, *id, *retry)
 	}
 	if command == "sync" {
 		return r.All(ctx, *id)

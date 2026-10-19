@@ -334,3 +334,6 @@ func validNetflixImageURL(raw string) bool {
 	}
 	return false
 }
+
+// ValidNetflixImageURL permite reutilizar a validação ao persistir a fonte.
+func ValidNetflixImageURL(raw string) bool { return validNetflixImageURL(raw) }
