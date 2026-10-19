@@ -1,5 +1,8 @@
 # Requer Docker Compose >= 2.24.4 por causa de !override.
 services:
+  api:
+    environment:
+      APP_ORIGINS: https://${APP_DOMAIN:?defina APP_DOMAIN com o domínio da VPS}
   web:
     environment:
       CADDY_SITE_ADDRESS: ${APP_DOMAIN:?defina APP_DOMAIN com o domínio da VPS}

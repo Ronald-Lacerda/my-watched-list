@@ -83,7 +83,7 @@ func (l *Lease) Save(ctx context.Context, a Account, events []collector.Event, f
 		if err != nil {
 			return 0, errors.New("data de evento inválida")
 		}
-		tag, err := tx.Exec(ctx, `INSERT INTO watch_events(user_id,streaming_account_id,source_event_key,source_title_id,source_title,watched_on,watched_at,match_title,media_type_hint,season_number,episode_number) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT(streaming_account_id,source_event_key) DO UPDATE SET source_title=excluded.source_title,match_title=excluded.match_title,media_type_hint=excluded.media_type_hint,season_number=excluded.season_number,episode_number=excluded.episode_number WHERE watch_events.title_id IS NULL`, a.UserID, a.ID, e.SourceKey, e.SourceTitleID, e.SourceTitle, day, e.WatchedAt, e.MatchTitle, e.MediaType, e.SeasonNumber, e.EpisodeNumber)
+		tag, err := tx.Exec(ctx, `INSERT INTO watch_events(user_id,streaming_account_id,source_event_key,source_title_id,source_title,watched_on,watched_at,match_title,media_type_hint,season_number,episode_number,source_work_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT(streaming_account_id,source_event_key) DO UPDATE SET source_title=excluded.source_title,match_title=excluded.match_title,media_type_hint=excluded.media_type_hint,season_number=excluded.season_number,episode_number=excluded.episode_number,source_work_id=excluded.source_work_id`, a.UserID, a.ID, e.SourceKey, e.SourceTitleID, e.SourceTitle, day, e.WatchedAt, e.MatchTitle, e.MediaType, e.SeasonNumber, e.EpisodeNumber, e.SourceWorkID)
 		if err != nil {
 			return 0, err
 		}

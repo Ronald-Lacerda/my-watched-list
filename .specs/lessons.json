@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 7,
+  "next_id": 11,
   "lessons": [
     {
       "id": "L-001",
@@ -112,6 +112,79 @@
       ],
       "created": "2026-10-18T21:58:38Z",
       "last_seen": "2026-10-18T21:58:38Z"
+    },
+    {
+      "id": "L-007",
+      "key": "ac_gap::valide corpos opcionais de mutacoes com os mesmos limites e erros json dos demais endpoints",
+      "text": "Valide corpos opcionais de mutações com os mesmos limites e erros JSON dos demais endpoints.",
+      "signal": "ac_gap",
+      "scope": "httpapi",
+      "status": "candidate",
+      "features": [
+        "fase-2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AC9/F1 (httpapi)"
+      ],
+      "created": "2026-10-18T23:02:51Z",
+      "last_seen": "2026-10-18T23:02:51Z"
+    },
+    {
+      "id": "L-008",
+      "key": "ac_gap::leia corpos de delete ate eof com limite sem usar contentlength positivo como prova de presenca",
+      "text": "Leia corpos de DELETE até EOF com limite, sem usar ContentLength positivo como prova de presença.",
+      "signal": "ac_gap",
+      "scope": "httpapi",
+      "status": "candidate",
+      "features": [
+        "fase-2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "AC14/F2 (httpapi)"
+      ],
+      "created": "2026-10-18T23:02:51Z",
+      "last_seen": "2026-10-18T23:02:51Z"
+    },
+    {
+      "id": "L-009",
+      "key": "surviving_mutant::asserte os campos e a orientacao de reconexao renderizados no card alem do rotulo de estado",
+      "text": "Asserte os campos e a orientação de reconexão renderizados no card, além do rótulo de estado.",
+      "signal": "surviving_mutant",
+      "scope": "web",
+      "status": "candidate",
+      "features": [
+        "fase-2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M8/AC21 (web)",
+        "M12/AC21 (web)"
+      ],
+      "created": "2026-10-18T23:02:52Z",
+      "last_seen": "2026-10-18T23:09:37Z"
+    },
+    {
+      "id": "L-010",
+      "key": "gate_fail::aguarde a tela de entrada apos logout antes de navegar ou autenticar outra pessoa nos testes de navegador",
+      "text": "Aguarde a tela de entrada após logout antes de navegar ou autenticar outra pessoa nos testes de navegador.",
+      "signal": "gate_fail",
+      "scope": "browser",
+      "status": "candidate",
+      "features": [
+        "fase-2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "T11/CI39175731069 (browser)"
+      ],
+      "created": "2026-10-18T23:25:57Z",
+      "last_seen": "2026-10-18T23:25:57Z"
     }
   ]
 }

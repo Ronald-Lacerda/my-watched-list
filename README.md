@@ -2,13 +2,14 @@
 
 Registro pessoal do que duas pessoas assistem, com notas individuais e favoritos do ano. A coleta será própria, começando pela Netflix. O TMDB será usado somente para metadados. Nome provisório.
 
-**Estado atual: Fase 1 implementada e validada.** Coletor Netflix, sessão cifrada por perfil, normalização, sync manual/diário e idempotência funcionando com os dois perfis reais. O enriquecimento TMDB passou nos testes controlados e aguarda o token do usuário para validação real. O app de notas e a autenticação web continuam na Fase 2. Consulte o [guia de operação Netflix](docs/netflix.md) para conectar os perfis e operar o sync.
+**Estado atual: Fase 2 implementada.** App com histórico dos dois perfis, filtros, notas individuais, média, pendentes e status das conexões. Login por username (`ronald` e `gabriela` nesta instalação) e senha pessoal, com primeiro acesso por convite local, sem senha padrão. Consulte o [guia de primeiro acesso e uso](docs/app.md). O [coletor Netflix](docs/netflix.md) continua operando com sessões cifradas e coleta idempotente. O token TMDB ainda é opcional para usar histórico e notas; sem ele, metadados permanecem pendentes.
 
 ## Estrutura
 
 ```text
 api/
-  cmd/api/                 Servidor HTTP
+  cmd/api/                 Servidor HTTP autenticado
+  cmd/admin/               Convites locais de primeiro acesso
   cmd/migrate/             Executor de migrations incorporadas ao binário
   internal/httpapi/        Rotas e testes HTTP
   migrations/              SQL goose e testes de integração
@@ -19,8 +20,9 @@ worker/
   store/                   Transações, locks e pendências de metadados
   tmdb/                    Correspondência conservadora e metadados
   syncer/                  Orquestração e agenda diária
+internal/auth/             Senhas, convites, sessões e limite de tentativas
 internal/config/           Configuração compartilhada dos processos Go
-web/                       React + Vite + TypeScript, base mobile-first
+web/                       PWA React + Vite + TypeScript, histórico e notas
 deploy/
   Dockerfile.backend       API, worker e executor de migrations
   Dockerfile.web           Frontend estático servido por Caddy
@@ -46,9 +48,9 @@ go.mod / go.sum            Um módulo compartilhado por API e worker
 - Eventos usam `UNIQUE (streaming_account_id, source_event_key)`. Na Netflix a chave é `netflix:movieID:epoch_ms`, sem índice de página ou título traduzido. O upsert idempotente é exercitado em banco real. Reassistir com uma nova chave é um novo evento. Alterar o dono de uma conexão com eventos é impedido pela chave estrangeira; uma transferência exige fluxo próprio.
 - `watch_events.source_title` e `source_title_id` preservam a identidade original. `title_id` e `episode_id` ficam nulos até o enriquecimento. Falhar no TMDB não deverá perder o histórico coletado.
 - `watched_on` preserva o dia informado pelo serviço. `watched_at` é opcional e só será preenchido se a fonte informar um instante real. Não inventamos meia-noite. Instantes usam `timestamptz`; a agenda e a apresentação usarão `America/Sao_Paulo` inicialmente.
-- Notas de 0 a 10 em passos de 0,5; uma por pessoa e título, inclusive para séries. A aplicação atualizará `updated_at` ao editar. Média do casal será calculada, sem persistência duplicada.
+- Notas de 0 a 10 em passos de 0,5; uma por pessoa e obra do streaming, inclusive para séries e sem depender do TMDB. `source_work_id` preserva o ID da obra; `ratings.source_key` mantém a nota estável após enriquecimento. Notas antigas por `title_id` continuam legíveis. A média usa as notas disponíveis, sem persistência duplicada.
 - Episódios pertencem somente a séries e devem coincidir com o título do evento. Temporada 0 permite especiais. Nenhuma duração assistida é inferida por enquanto; duração de catálogo poderá servir a estatísticas estimadas, identificadas como tal.
-- Sem senhas padrão. A CLI cria identidades locais com password_hash desabilitado; não há acesso web para elas. Auth HTTP e atribuição de senhas serão implementadas na Fase 2. Nenhum endpoint público de histórico existe nesta fase.
+- Sem senhas padrão. A CLI cria identidades desabilitadas até o primeiro acesso por convite de uma hora. Usernames são canônicos e únicos; e-mail é somente identificador administrativo legado. Auth usa Argon2id, sessões opacas revogáveis de 14 dias, cookie HttpOnly/SameSite e Secure em HTTPS. Histórico e notas exigem sessão; mutações também exigem Origin autorizado. As duas pessoas pertencem à mesma casa e compartilham leitura.
 - VPS assumida como Linux com Docker Compose v2. Specs, domínio, estratégia de backup e outros streamings serão preenchidos quando forem informados.
 
 ## Executar com Docker
@@ -152,7 +154,8 @@ TEST_DATABASE_URL='postgres://test:test-local-only@127.0.0.1:55432/watched_test?
 docker compose -f deploy/compose.test.yaml down -v
 ```
 
-A tag `integration` exige `TEST_DATABASE_URL`; sua ausência falha explicitamente. Os testes criam e removem schemas aleatórios e cobrem migrations, replay, revisitas, locks, rollback, notas, vínculos e retry de metadados. A normalização usa fixture sintética identificada, sem histórico pessoal. Para rodar todos os testes, instale Chromium/driver com `go run github.com/mxschmitt/playwright-go/cmd/playwright@v0.6201.1 install --only-shell chromium` e execute `go test -tags=integration -count=1 ./...`; em Linux acrescente `--with-deps` à instalação. Os testes de browser usam um site local controlado e não substituem validação Netflix ao vivo.
+A tag `integration` exige `TEST_DATABASE_URL`; sua ausência falha explicitamente. Os testes criam e removem schemas aleatórios e cobrem migrations, replay, revisitas, locks, rollback, notas, vínculos e retry de metadados. A normalização usa fixture sintética identificada, sem histórico pessoal. Para rodar todos os testes, instale Chromium/driver com `go run github.com/mxschmitt/playwright-go/cmd/playwright@v0.6201.1 install --only-shell chromium` e execute `npm --prefix web run build
+go test -tags=integration -count=1 ./...`; em Linux acrescente `--with-deps` à instalação. Os testes de browser usam um site local controlado e não substituem validação Netflix ao vivo.
 
 O GitHub Actions executa testes Go com race detector, integração PostgreSQL, build web e smoke test da stack Docker. Os três jobs passaram na [validação inicial da Fase 0](https://github.com/Ronald-Lacerda/my-watched-list/actions/runs/39166847423). A revisão independente confirmou 16 critérios e detectou 10 falhas injetadas em cópia isolada; consulte `.specs/features/fase-0/validation.md`. Na Fase 1, o Docker Desktop local foi recuperado pela atualização de 4.68.0 para 4.95.0, usando o instalador oficial assinado. Engine 29.8.2, hello-world, build da stack, healthz/readyz e Chromium dentro do worker foram validados localmente. O volume da aplicação e os demais containers existentes foram preservados.
 

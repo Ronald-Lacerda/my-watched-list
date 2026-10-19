@@ -26,6 +26,7 @@ type Connection struct {
 type Event struct {
 	SourceKey     string     `json:"source_key"`
 	SourceTitleID string     `json:"source_title_id"`
+	SourceWorkID  string     `json:"source_work_id,omitempty"`
 	SourceTitle   string     `json:"source_title"`
 	WatchedOn     string     `json:"watched_on"`
 	WatchedAt     *time.Time `json:"watched_at,omitempty"`
