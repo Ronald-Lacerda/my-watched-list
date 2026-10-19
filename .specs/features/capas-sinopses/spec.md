@@ -45,4 +45,4 @@ Inventar sinopses, associar pela popularidade ou sem comprovação, scraping de 
 | CMS-01 | 1–2 | implemented |
 | CMS-02 | 4–5, 7 | implemented |
 | CMS-03 | 3, 6 | implemented |
-| CMS-04 | 8–9 | pending |
+| CMS-04 | 8–9 | implemented |

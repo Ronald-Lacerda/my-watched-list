@@ -42,7 +42,7 @@ Where: documentação e operação local
 Depends on: T4
 Tests: backup/restore isolado, migration/Compose/smoke, evidência de Naruto e pendências confirmadas; validadores
 Gate: Build
-- [ ] Documentar, fazer backup validado, implantar e reprocessar metadados; completar associações comprovadas e relatar limitações. CMS-04, AC8–9. Revisão independente após último commit, PR separado e CI verde.
+- [x] Documentar, fazer backup validado, implantar e reprocessar metadados; completar associações comprovadas e relatar limitações. CMS-04, AC8–9. Revisão independente após último commit, PR separado e CI verde.
 
 ## Test Coverage Matrix
 
@@ -55,6 +55,8 @@ T2: Full passou. AC4 → internal/catalogstore/store_integration_test.go:46/106/
 T3: Full passou. AC3 → api/internal/httpapi/metadata_integration_test.go:61/66/72/76/81/91/94/97/100 (auth, query, candidatos completos, Origin, JSON, tipo e identidade); AC4 → :111/116/122/127 (metadados, duas pessoas, ID de série confiável e origem Netflix); falhas → :135/140/144/147 (erro sanitizado, sem gravação parcial, ausência do token e histórico disponível). Mapeamento reverso: todos os casos novos sustentam CMS-03 e AC4; notas/origem permanecem cobertas pelo teste transacional T2. O frontend não recebe token.
 
 T4: Build web e Full/Quick/vet/build Go passaram. AC6 e mapeamento reverso → metadata_browser_integration_test.go: foco inicial, erro mantendo consulta, busca sem confirmar automaticamente, seleção explícita, sinopse/capa/fonte visíveis, nota zero e parceira dez, celular sem overflow, Escape/foco e fallback Netflix. O teste verifica também ausência de API/imagens em CacheStorage. Regressões anteriores preservam resultados e somente especificam .rating-button onde o card agora tem duas ações. Screenshot sintético inspecionado em 390px.
+
+T5: backup de 166.016 bytes restaurado em banco temporário e comparado (contas/credenciais, sessões do app e Netflix, eventos, títulos e notas); banco temporário removido após a conferência, dump local ignorado preservado. Migration 5, imagens Compose e API/web/worker atualizados; API ready e assets conferidos. Sem mudança de senhas, volumes ou chave. 1.248 eventos preservados, 1.248 com capa/sinopse, sendo 1.246 TMDB e dois Netflix; 192 URLs de imagens HTTP 200, 193 itens na lista. Naruto validado por Match real → TMDB 20982 com imagem/sinopse; quatro nomes truncados confirmados por página oficial completa, sem habilitar associação por prefixo. Build web/Compose e Full/Quick/vet/build passaram no código final; testes continuam sintéticos. Evidência operacional privada fica em .local, sem payloads pessoais no repositório. Revisão independente e CI são os gates de fechamento após este commit.
 
 | Camada | Cobertura |
 | --- | --- |

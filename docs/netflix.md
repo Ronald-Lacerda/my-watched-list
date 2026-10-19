@@ -6,7 +6,7 @@ A CLI administrativa roda localmente, sem endpoints públicos. Cada conexão cor
 
 No `.env`, configure POSTGRES_PASSWORD, SESSION_ENCRYPTION_KEY (32 bytes em base64), TMDB_READ_ACCESS_TOKEN e, se necessário, SYNC_CRON/SYNC_TIMEZONE. O token TMDB é o **API Read Access Token**, enviado como Bearer. Nunca use variável VITE_* para esses segredos. Sem o token, a coleta persiste eventos e deixa metadados pendentes.
 
-Se ainda não tiver token, entre na sua conta TMDB pelo navegador de desktop, acesse Configurações → API e solicite acesso seguindo o [guia oficial](https://developer.themoviedb.org/docs/getting-started). Copie o **API Read Access Token** da seção API para `TMDB_READ_ACCESS_TOKEN` no `.env` local, sem enviá-lo pelo chat. Essa é a credencial Bearer descrita na [documentação de autenticação](https://developer.themoviedb.org/docs/authentication-application). Depois recrie o worker com Compose para aplicar o ambiente e execute sync para processar pendências.
+Se ainda não tiver token, entre na sua conta TMDB pelo navegador de desktop, acesse Configurações → API e solicite acesso seguindo o [guia oficial](https://developer.themoviedb.org/docs/getting-started). Copie o **API Read Access Token** da seção API para `TMDB_READ_ACCESS_TOKEN` no `.env` local, sem enviá-lo pelo chat. Essa é a credencial Bearer descrita na [documentação de autenticação](https://developer.themoviedb.org/docs/authentication-application). Depois recrie API/worker com Compose para aplicar o ambiente e execute enrich para processar metadados sem nova coleta; veja o [guia de metadados](metadados.md).
 
 Para o login com navegador visível na máquina local, inicie o banco com a publicação opcional em loopback:
 
@@ -83,7 +83,7 @@ O normalizador reconhece `viewedItems`, IDs movieID, date em epoch de milissegun
 
 A chave `netflix:movieID:epoch_ms` não depende do título traduzido nem da posição na página. Reassistir em outro instante gera outro evento. Se a fonte colapsar duas visualizações no mesmo ID/instante, elas são indistinguíveis; não inventamos eventos. Dia local e instante UTC ficam separados. Limites: 1000 páginas e 16 MiB por resposta; atingir limite ou repetir página é erro, sem sucesso parcial.
 
-O TMDB só é consultado após persistir o histórico. Só há associação automática com título/título original exato e único no tipo conhecido; tipo desconhecido busca filme e série. Sem nome de série confiável, não há tentativa de adivinhar o título a partir do episódio. Pôster é armazenado como caminho de imagem TMDB. Episódios exigem temporada/episódio explícitos e confirmação pelo endpoint de episódio.
+O TMDB só é consultado após persistir o histórico. Há associação automática com título, título original ou alias oficial único equivalente após normalizar pontuação, caixa e acentos, no tipo conhecido; tipo desconhecido busca filme e série. Sem nome de série confiável, não há tentativa de adivinhar o título a partir do episódio. Pôster é armazenado como caminho de imagem TMDB. Episódios exigem temporada/episódio explícitos e confirmação pelo endpoint de episódio.
 
 Falha transitória TMDB adia a tentativa por 15 minutos; ausência/ambiguidade adia por um dia. As pendências são duráveis em watch_events e processadas na próxima execução, inclusive sync manual. Cada ciclo considera até 500 pendências por perfil; se necessário, execute novamente para escoar lotes maiores. O último sucesso da coleta é independente do enriquecimento. Não há fallback LLM ativo.
 

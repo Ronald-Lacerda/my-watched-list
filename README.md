@@ -1,8 +1,8 @@
 # My Watched List
 
-Registro pessoal do que duas pessoas assistem, com notas individuais e favoritos do ano. A coleta será própria, começando pela Netflix. O TMDB será usado somente para metadados. Nome provisório.
+Registro pessoal do que duas pessoas assistem, com notas individuais e favoritos do ano. A coleta será própria, começando pela Netflix. O TMDB fornece metadados; material oficial público da Netflix pode completar imagens e sinopses ausentes. Nome provisório.
 
-**Estado atual: Fase 2 implementada.** App com histórico dos dois perfis, filtros, notas individuais, média, pendentes e status das conexões. Login por username (`ronald` e `gabriela` nesta instalação) e senha pessoal, com primeiro acesso por convite local, sem senha padrão. Consulte o [guia de primeiro acesso e uso](docs/app.md). O [coletor Netflix](docs/netflix.md) continua operando com sessões cifradas e coleta idempotente. O token TMDB ainda é opcional para usar histórico e notas; sem ele, metadados permanecem pendentes.
+**Estado atual: Fase 2 implementada.** App com histórico dos dois perfis, filtros, notas individuais, média, pendentes e status das conexões. Login por username (`ronald` e `gabriela` nesta instalação) e senha pessoal, com primeiro acesso por convite local, sem senha padrão. Consulte o [guia de primeiro acesso e uso](docs/app.md). O [coletor Netflix](docs/netflix.md) continua operando com sessões cifradas e coleta idempotente. O token TMDB é opcional para usar histórico e notas. Capas, sinopses visíveis e identificação confirmada estão documentadas no [guia de metadados](docs/metadados.md).
 
 ## Estrutura
 
@@ -186,12 +186,12 @@ O override substitui a porta local por 80/TCP e 443/TCP/UDP. O banco e a API con
 | Fase | Entrega | Estado |
 | --- | --- | --- |
 | 0 | Monorepo, processos, Compose, schema e README | Estrutura aprovada |
-| 1 | Netflix: sessão criptografada, API interna de histórico via Playwright, paginação, normalização, cron, idempotência e TMDB | Validada; TMDB real aguarda token |
+| 1 | Netflix: sessão criptografada, API interna de histórico via Playwright, paginação, normalização, cron, idempotência e TMDB | Validada com TMDB real |
 | 2 | Auth para duas pessoas, timeline com filtros, notas, média do casal, pendentes e PWA | Planejada |
 | 3 | Melhores do ano, rankings individuais/do casal e estatísticas | Planejada |
 | 4 | Outros streamings e fallback assistido por LLM | Planejada |
 
-O tráfego real de `/viewingactivity` foi inspecionado em sessão autorizada: vaModel inicial e Falcor na paginação, com identidade e total conferidos. Foram salvos 557 eventos de R e 691 de Gabriela, sem aumento ao repetir o sync. Sessão expirada marca `needs_login`; mudança de parser registra erro sem marcar sync bem-sucedido. O token TMDB ainda não foi configurado; eventos ficam pendentes de metadados, e os testes usam HTTP controlado. A interface `AssistedExtractor` fica preparada para injeção futura, com página sanitizada e saída validada no mesmo schema dos eventos. Não há dependência de Trakt, Simkl nem de serviço de terceiros para coleta.
+O tráfego real de `/viewingactivity` foi inspecionado em sessão autorizada: vaModel inicial e Falcor na paginação, com identidade e total conferidos. Foram salvos 557 eventos de R e 691 de Gabriela, sem aumento ao repetir o sync. Sessão expirada marca `needs_login`; mudança de parser registra erro sem marcar sync bem-sucedido. O token TMDB foi configurado somente no ambiente local; o catálogo foi enriquecido e os testes continuam usando HTTP controlado. A interface `AssistedExtractor` fica preparada para injeção futura, com página sanitizada e saída validada no mesmo schema dos eventos. Não há dependência de Trakt, Simkl nem de serviço de terceiros para coleta.
 
 Dados a informar antes do deploy na VPS: SO e recursos da VPS, instalação atual do Docker/proxy, domínio, outros streamings e perfis que cada pessoa usa. A coleta local funciona sem esses dados.
 
