@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+!.env.example
+.local
+**/node_modules
+**/dist
+bin
+coverage
+cookies
+sessions
+**/storage-state*.json
+**/playwright/.auth
+graphify-out

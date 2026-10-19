@@ -1,0 +1,9 @@
+# Requer Docker Compose >= 2.24.4 por causa de !override.
+services:
+  web:
+    environment:
+      CADDY_SITE_ADDRESS: ${APP_DOMAIN:?defina APP_DOMAIN com o domínio da VPS}
+    ports: !override
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
