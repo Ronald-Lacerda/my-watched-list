@@ -14,7 +14,7 @@ Where: api/internal/library e api/internal/httpapi
 Depends on: none
 Tests: integração PostgreSQL de agrupamento/filtros/paginação/notas e contratos brutos existentes
 Gate: Full
-- [ ] Adicionar group_series opcional, resumir por identidade antes do cursor e retornar participantes/quantidade; testes com mesmo nome e identidades distintas, mais de uma página e série sem TMDB. SAG-01, AC1–3/6.
+- [x] Adicionar group_series opcional, resumir por identidade antes do cursor e retornar participantes/quantidade; testes com mesmo nome e identidades distintas, mais de uma página e série sem TMDB. SAG-01, AC1–3/6. TestSeriesGroupingAndFilters falhou com 400 antes da implementação; quatro testes novos passaram após implementar. Full Go passou com o frontend anterior, preservando contratos brutos e regressões.
 
 ### T2: apresentar série e avaliar obra inteira
 Where: web e testes Chromium
