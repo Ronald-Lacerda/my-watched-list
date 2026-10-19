@@ -2,6 +2,25 @@
 
 A Fase 2 oferece histórico compartilhado, filtros por pessoa/streaming/período, notas individuais, média e pendentes de avaliação. Cada pessoa entra com seu username e sua própria senha. Os logins desta instalação são `ronald` (perfil R) e `gabriela`. O ambiente representa uma única casa: ambas podem consultar o histórico e as notas das duas pessoas.
 
+## Visual Sessão
+
+O app usa o tema escuro Sessão, com navegação superior no desktop e inferior no celular. O primeiro registro da seleção atual aparece em destaque, com pessoa, dia, streaming, notas individuais e média. Os demais continuam organizados por dia. Cada registro conserva sua identidade: assistidas de pessoas diferentes e episódios não são reunidos em um evento artificial.
+
+Os filtros e as datas continuam no endereço e combinam entre si. Carregar mais mantém o destaque e acrescenta registros ao histórico. O destaque de pendentes também respeita a pessoa logada e os filtros; dar nota zero conta como avaliação.
+
+Quando há metadados TMDB, o destaque usa o pôster da obra. Sem pôster ou com falha ao carregar, aparece arte abstrata local; título, pessoa, serviço, dia e notas continuam disponíveis. Nenhuma imagem ou avaliação de exemplo da proposta visual é incluída no produto. Configurar o token TMDB continua opcional e segue o [guia Netflix](netflix.md).
+
+DM Sans e Barlow Condensed são servidas pelo próprio app e incluídas no shell offline. Os arquivos WOFF2 e licenças SIL Open Font License ficam em `web/public/fonts`; fontes de origem: [Google Fonts](https://github.com/google/fonts). O navegador não consulta Google Fonts em tempo de execução. O cache continua limitado a arquivos públicos e não guarda o histórico, as notas ou a sessão.
+
+Para aplicar apenas a interface em uma instalação já saudável, sem recriar API, worker ou banco:
+
+```sh
+docker compose --env-file .env -f deploy/compose.yaml build web
+docker compose --env-file .env -f deploy/compose.yaml up -d --no-deps web
+```
+
+Recarregue a página depois da atualização. O novo shell tem uma versão própria de cache e preserva o login existente. O redesign não exige migration, nova coleta, redefinição de senha ou novo convite.
+
 ## Usernames e primeiro acesso
 
 O login usa apenas username e senha. Nomes são normalizados para minúsculas e aceitam 3–40 caracteres: começam com letra e continuam com letras ASCII, números ou `_`. Espaços externos são ignorados. O limite de tentativas usa a mesma identidade canônica, inclusive com caixa diferente. E-mail não autentica.
@@ -53,7 +72,7 @@ Eventos de séries coletados antes da migration 3 precisam de novo sync para pre
 
 ## Instalar e usar sem rede
 
-No navegador compatível, use a opção de instalar/adicionar à tela inicial. HTTPS é necessário fora de localhost. Há manifest, ícones de 192/512 px e service worker versionado. O cache guarda apenas HTML, JS, CSS e ícones públicos. Nenhuma rota `/api`, nota, histórico ou credencial entra no cache ou no armazenamento web.
+No navegador compatível, use a opção de instalar/adicionar à tela inicial. HTTPS é necessário fora de localhost. Há manifest, ícones de 192/512 px e service worker versionado. O cache guarda apenas HTML, JS, CSS, ícones e as duas fontes públicas locais. Nenhuma rota `/api`, nota, histórico ou credencial entra no cache ou no armazenamento web.
 
 Sem rede, o app avisa que não atualiza o histórico nem salva notas. Um formulário já aberto preserva o texto após falha e permite tentar novamente; não há fila de gravações offline. Ao reabrir offline, somente a estrutura pública é carregada. Reconecte e use “Tentar novamente”. Sessões duram até 14 dias e “Sair” revoga a sessão no servidor.
 

@@ -28,7 +28,7 @@ Where: docs
 Depends on: T2
 Tests: Compose build/up web, local smoke, spec validators
 Gate: Build
-- [ ] Documentar o redesign e a ausência opcional de pôsteres em docs/app.md; atualizar só web no Compose e verificar preservação dos dados. AC9. Arquivos: docs/app.md e .specs/STATE.md. Revisão independente após último commit; PR baseado na Fase 2 e pronto apenas com CI verde.
+- [x] Documentar o redesign e a ausência opcional de pôsteres em docs/app.md; atualizar só web no Compose e verificar preservação dos dados. AC9. Arquivos: docs/app.md e .specs/STATE.md. Compose build/up --no-deps web passou; prontidão, assets e ambas as fontes conferidos. Comparação antes/depois preservou contas/credenciais, sessões e 1248 eventos (zero notas no momento), além dos IDs de todos os demais containers. Nenhuma migration ou coleta executada. Revisão independente após este commit; PR baseado na Fase 2 e pronto apenas com CI verde.
 
 ## Test Coverage Matrix
 
