@@ -41,6 +41,9 @@ func TestBrowserSessionHighlightAndFilters(t *testing.T) {
 	loginBrowser(t, b, 0)
 	records(t, p, 6)
 	featured := highlightedEvent(t, p, first)
+	if text, err := featured.Locator(".couple-score span").TextContent(); err != nil || text != "Média · 1/2" {
+		t.Fatal("contador não corresponde à única avaliação disponível", text, err)
+	}
 	for _, expected := range []string{"Filme A", person, "Netflix", "18 de outubro de 2026"} {
 		if text, _ := featured.TextContent(); !strings.Contains(text, expected) {
 			t.Fatal("destaque perdeu informação do evento", expected, text)
@@ -54,8 +57,28 @@ func TestBrowserSessionHighlightAndFilters(t *testing.T) {
 	openRating(t, p, first)
 	saveRating(t, p, "0", "Nota zero no destaque")
 	waitJS(t, p, `()=>document.querySelector('.featured-watch .couple-score strong')?.textContent==='5'`)
-	if text, _ := featured.TextContent(); !strings.Contains(text, "Sua nota: 0") || !strings.Contains(text, "Gabriela") || !strings.Contains(text, "10") {
-		t.Fatal("destaque não atualizou as duas notas e preservou zero", text)
+	for _, id := range b.ids[:2] {
+		card := eventCard(p, id)
+		if text, err := card.Locator(".couple-score strong").TextContent(); err != nil || text != "5" {
+			t.Fatal("média da obra não atualizada em todos os eventos", id, text, err)
+		}
+		if text, err := card.Locator(".couple-score span").TextContent(); err != nil || text != "Média · 2/2" {
+			t.Fatal("contador não corresponde às duas avaliações da obra", id, text, err)
+		}
+		rows, err := card.Locator(".individual-scores span").AllTextContents()
+		if err != nil || len(rows) != 2 {
+			t.Fatal("notas individuais ausentes", id, rows, err)
+		}
+		individual := map[string]bool{}
+		for _, row := range rows {
+			individual[row] = true
+		}
+		if !individual[b.f.users[0].Name+"0"] || !individual[b.f.users[1].Name+"10"] {
+			t.Fatal("nota zero ou nota da parceira alterada", id, rows)
+		}
+		if text, err := card.GetByRole("button").TextContent(); err != nil || text != "Sua nota: 0" {
+			t.Fatal("ação não preservou a nota zero", id, text, err)
+		}
 	}
 	choose(t, p, "Streaming", "prime_video")
 	records(t, p, 1)

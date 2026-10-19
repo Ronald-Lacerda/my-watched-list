@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 11,
+  "next_id": 12,
   "lessons": [
     {
       "id": "L-001",
@@ -185,6 +185,24 @@
       ],
       "created": "2026-10-18T23:25:57Z",
       "last_seen": "2026-10-18T23:25:57Z"
+    },
+    {
+      "id": "L-011",
+      "key": "surviving_mutant::nos testes de notas do historico confira em conjunto as notas por pessoa a media e o contador exato de avaliacoes",
+      "text": "Nos testes de notas do histórico, confira em conjunto as notas por pessoa, a média e o contador exato de avaliações.",
+      "signal": "surviving_mutant",
+      "scope": "web/historico",
+      "status": "candidate",
+      "features": [
+        "redesign-sessao"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "M5 (web/historico)"
+      ],
+      "created": "2026-10-19T00:39:36Z",
+      "last_seen": "2026-10-19T00:39:36Z"
     }
   ]
 }

@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-  T1 --> T2 --> T3
+  T1 --> T2 --> T3 --> T4
 ```
 
 ## Task Breakdown
@@ -30,7 +30,15 @@ Tests: Compose build/up web, local smoke, spec validators
 Gate: Build
 - [x] Documentar o redesign e a ausência opcional de pôsteres em docs/app.md; atualizar só web no Compose e verificar preservação dos dados. AC9. Arquivos: docs/app.md e .specs/STATE.md. Compose build/up --no-deps web passou; prontidão, assets e ambas as fontes conferidos. Comparação antes/depois preservou contas/credenciais, sessões e 1248 eventos (zero notas no momento), além dos IDs de todos os demais containers. Nenhuma migration ou coleta executada. Revisão independente após este commit; PR baseado na Fase 2 e pronto apenas com CI verde.
 
+### T4: precisão do contador e das notas por obra
+Where: api/internal/httpapi/session_browser_integration_test.go
+Depends on: T3
+Tests: TestBrowserSessionHighlightAndFilters, mutante do contador detectado pela revisão
+Gate: Full
+- [x] Exigir contador exato 1/2 antes e 2/2 após avaliar, média 5 e notas individuais R=0/Gabriela=10 nos dois eventos da obra. AC5. Corrige a lacuna M5 apontada pela revisão independente; nenhuma mudança no comportamento do produto. Teste direcionado e Full httpapi passaram após a alteração. Build web já validado e inalterado. Revisão repetirá o mutante M5 após este commit.
+
 ## Test Coverage Matrix
+
 
 | Camada | Cobertura |
 | --- | --- |

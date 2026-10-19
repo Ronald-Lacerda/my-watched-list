@@ -74,6 +74,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: T11/CI39175731069 (browser)
 - last seen: 2026-10-18T23:25:57Z
 
+### L-011 - Nos testes de notas do histórico, confira em conjunto as notas por pessoa, a média e o contador exato de avaliações.
+- signal: `surviving_mutant` · recurrence: 1 feature(s) · scope: `web/historico` · harmful: 0
+- features: redesign-sessao
+- evidence: M5 (web/historico)
+- last seen: 2026-10-19T00:39:36Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
