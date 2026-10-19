@@ -25,6 +25,9 @@ type browserApp struct {
 }
 
 func browserFixture(t *testing.T, withHistory bool) browserApp {
+	return browserFixtureOptions(t, withHistory, Options{})
+}
+func browserFixtureOptions(t *testing.T, withHistory bool, options Options) browserApp {
 	t.Helper()
 	var b browserApp
 	if withHistory {
@@ -41,7 +44,8 @@ func browserFixture(t *testing.T, withHistory bool) browserApp {
 	}
 	b.server = httptest.NewUnstartedServer(nil)
 	origin := "http://" + b.server.Listener.Addr().String()
-	handler, err := NewApp(b.f.pool, Options{Origins: []string{origin}})
+	options.Origins = []string{origin}
+	handler, err := NewApp(b.f.pool, options)
 	if err != nil {
 		t.Fatal(err)
 	}

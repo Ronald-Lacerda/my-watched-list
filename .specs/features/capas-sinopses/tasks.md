@@ -35,7 +35,7 @@ Where: web e testes Chromium
 Depends on: T3
 Tests: browser com busca/erro/retry/seleção, capas/sinopses e notas preservadas, celular/teclado/PWA
 Gate: Build
-- [ ] Sinopse no card e MetadataDialog acessível; seletor de notas específico após acrescentar ação de metadados, preservando regressões. CMS-03, AC6.
+- [x] Sinopse no card e MetadataDialog acessível; seletor de notas específico após acrescentar ação de metadados, preservando regressões. CMS-03, AC6.
 
 ### T5: catálogo real e implantação
 Where: documentação e operação local
@@ -51,6 +51,8 @@ T1: Full passou em banco sintético e Chromium, sem exclusão de casos anteriore
 T2: Full passou. AC4 → internal/catalogstore/store_integration_test.go:46/106/109/118 (duas pessoas, isolamento por obra/serviço, origem e notas 0/10 intactas, complemento sem ID inventado); AC5 → :66/70/86/101/135 (resultado atrasado, episódio futuro, lock concorrente e fallback excluído das pendências); AC7 → worker/syncer/enrich_integration_test.go:33/36/42/45 (backoff, lote 500, 501 eventos e sessão intactos), worker/cmd/worker/enrich_integration_test.go:20/22 (sem navegador/chave). Mapeamento reverso: todos os novos casos pertencem a CMS-02; validações de tipo/ID/CDN também sustentam AC3–4. Nenhum teste antigo removido ou enfraquecido.
 
 T3: Full passou. AC3 → api/internal/httpapi/metadata_integration_test.go:61/66/72/76/81/91/94/97/100 (auth, query, candidatos completos, Origin, JSON, tipo e identidade); AC4 → :111/116/122/127 (metadados, duas pessoas, ID de série confiável e origem Netflix); falhas → :135/140/144/147 (erro sanitizado, sem gravação parcial, ausência do token e histórico disponível). Mapeamento reverso: todos os casos novos sustentam CMS-03 e AC4; notas/origem permanecem cobertas pelo teste transacional T2. O frontend não recebe token.
+
+T4: Build web e Full/Quick/vet/build Go passaram. AC6 e mapeamento reverso → metadata_browser_integration_test.go: foco inicial, erro mantendo consulta, busca sem confirmar automaticamente, seleção explícita, sinopse/capa/fonte visíveis, nota zero e parceira dez, celular sem overflow, Escape/foco e fallback Netflix. O teste verifica também ausência de API/imagens em CacheStorage. Regressões anteriores preservam resultados e somente especificam .rating-button onde o card agora tem duas ações. Screenshot sintético inspecionado em 390px.
 
 | Camada | Cobertura |
 | --- | --- |

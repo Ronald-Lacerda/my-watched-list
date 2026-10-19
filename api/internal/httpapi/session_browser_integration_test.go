@@ -76,7 +76,7 @@ func TestBrowserSessionHighlightAndFilters(t *testing.T) {
 		if !individual[b.f.users[0].Name+"0"] || !individual[b.f.users[1].Name+"10"] {
 			t.Fatal("nota zero ou nota da parceira alterada", id, rows)
 		}
-		if text, err := card.GetByRole("button").TextContent(); err != nil || text != "Sua nota: 0" {
+		if text, err := card.Locator(".rating-button").TextContent(); err != nil || text != "Sua nota: 0" {
 			t.Fatal("ação não preservou a nota zero", id, text, err)
 		}
 	}
@@ -176,7 +176,7 @@ func TestBrowserSessionPosterFallbackAndKeyboard(t *testing.T) {
 			t.Fatal(err)
 		}
 		waitJS(t, p, `()=>document.documentElement.scrollWidth<=window.innerWidth`)
-		button := featured.GetByRole("button")
+		button := featured.Locator(".rating-button")
 		value, err := button.Evaluate(`e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44}`, nil)
 		if err != nil || value != true {
 			t.Fatal("alvo de avaliação pequeno", width, value, err)

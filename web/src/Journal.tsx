@@ -3,6 +3,7 @@ import { api, message, scoreLabel, serviceName, type FilterOptions, type History
 import { Icon } from './icons'
 import { Poster } from './Poster'
 import { RatingDialog } from './RatingDialog'
+import { MetadataDialog } from './MetadataDialog'
 
 interface Filters { person: string; service: string; from: string; to: string }
 const emptyFilters: Filters = { person: '', service: '', from: '', to: '' }
@@ -15,6 +16,7 @@ export function Journal({ user, pending }: { user: User; pending: boolean }) {
   const [items, setItems] = useState<WatchItem[]>([]), [total, setTotal] = useState(0), [cursor, setCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(true), [loadingMore, setLoadingMore] = useState(false), [error, setError] = useState(''), [optionsError, setOptionsError] = useState('')
   const [retry, setRetry] = useState(0), [selected, setSelected] = useState<WatchItem | null>(null), [notice, setNotice] = useState('')
+  const [metadataItem, setMetadataItem] = useState<WatchItem | null>(null)
   const request = useRef<AbortController | null>(null)
   useEffect(() => { const restore = () => { request.current?.abort(); setFilters(readFilters()) }; window.addEventListener('popstate', restore); return () => window.removeEventListener('popstate', restore) }, [])
   const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value !== '')); query.set('group_series', 'true'); if (pending) query.set('pending', 'true')
@@ -50,9 +52,11 @@ export function Journal({ user, pending }: { user: User; pending: boolean }) {
     const individualScores = <div className="individual-scores">{options.people.map(person => { const rating = item.ratings.find(value => value.user_id === person.id); return <span key={person.id}>{person.name}<b>{rating ? scoreLabel(rating.score) : '—'}</b></span> })}</div>
     const coupleScore = <div className="couple-score"><Icon name="star" size={15} /><strong>{item.average !== null ? scoreLabel(item.average) : '—'}</strong><span>{item.ratings_count ? `Média · ${item.ratings_count}/${options.people.length || 2}` : 'Sem notas ainda'}</span></div>
     return <article className={`watch-card${isFeatured ? ' featured-watch' : ''}`} key={item.id} data-event-id={item.id} aria-label={`${item.title}, assistido por ${watchers.map(person => person.name).join(' e ')}`}>
-      <Poster title={item.title} path={item.poster_path} featured={isFeatured} />
+      <Poster title={item.title} path={item.poster_path} url={item.poster_url} featured={isFeatured} />
       <div className="watch-info"><div className="watch-type"><span>{item.media_type === 'tv' ? 'SÉRIE' : item.media_type === 'movie' ? 'FILME' : 'VÍDEO'}</span>{item.year && <span>· {item.year}</span>}</div><h3 className={isFeatured && Array.from(item.title).length > 48 ? 'long-watch-title' : undefined}>{item.title}</h3>{isSeries && <p className="series-summary">{item.watch_count.toLocaleString('pt-BR')} {item.watch_count === 1 ? 'registro' : 'registros'} no período</p>}
         <div className="watch-meta">{watchers.map(person => <span className="watch-person" key={person.id}><span className="tiny-avatar">{person.name.slice(0, 1)}</span>{person.name}</span>)}<span className={`service-pill ${item.service === 'netflix' ? 'netflix' : ''}`}>{item.service === 'netflix' && <b>N</b>}{serviceName(item.service)}</span>{(isFeatured || isSeries) && <time className="watch-date" dateTime={item.watched_on}>{isSeries ? 'Última vez em ' : ''}{dayLabel(item.watched_on)}</time>}</div>
+        {item.overview ? <><p className="watch-overview">{item.overview}</p><span className="metadata-source">Sinopse do {item.metadata_provider === 'netflix' ? 'Netflix' : 'TMDB'}{item.overview_language && !item.overview_language.startsWith('pt') ? ' · em inglês' : ''}</span></> : <p className="metadata-missing">Sinopse ainda não identificada.</p>}
+        <button className="metadata-button" onClick={() => setMetadataItem(item)} disabled={!item.rating_key} aria-label={`Informações de ${item.title}`}>{item.overview && (item.poster_path || item.poster_url) ? 'Corrigir informações' : 'Completar informações'}<Icon name="arrow" size={12} /></button>
         {!isFeatured && individualScores}
       </div>
       <div className="watch-rating">{isFeatured ? <div className="featured-scores">{individualScores}{coupleScore}</div> : coupleScore}<button className={`rating-button ${own ? 'is-rated' : ''}`} disabled={!item.rating_key} onClick={() => setSelected(item)} aria-label={`${own ? 'Editar nota de' : 'Avaliar'} ${item.title}`} title={item.rating_key ? undefined : 'Esta série precisa de uma nova sincronização antes de receber nota.'}><Icon name={own ? 'pencil' : 'star'} size={14} />{item.rating_key ? own ? `Sua nota: ${scoreLabel(own.score)}` : 'Dar minha nota' : 'Aguardando atualização'}</button></div>
@@ -70,6 +74,7 @@ export function Journal({ user, pending }: { user: User; pending: boolean }) {
     {featured && watchCard(featured, true)}
     <div className="journal-feed">{Array.from(groups.entries()).map(([day, records]) => <section className={`day-group${records.length === 1 ? ' single-record-day' : ''}`} key={day} aria-label={dayLabel(day)}><div className="day-heading"><span className="day-dot" /><h2>{dayLabel(day)}</h2><span className="day-line" /><small>{records.length}</small></div><div className="day-records">{records.map(item => watchCard(item))}</div></section>)}</div>
     {!loading && items.length > 0 && <footer className="feed-footer"><span>{pending ? 'Uma opinião por obra, no seu tempo.' : `Exibindo ${items.length.toLocaleString('pt-BR')} de ${total.toLocaleString('pt-BR')} itens`}</span>{cursor && <button className="button" onClick={more} disabled={loadingMore}>{loadingMore ? 'Carregando…' : 'Carregar mais'}{!loadingMore && <Icon name="arrow" size={16} />}</button>}</footer>}
+    {metadataItem && <MetadataDialog item={metadataItem} onClose={() => setMetadataItem(null)} onSaved={() => { setMetadataItem(null); setNotice('Informações atualizadas para nós dois.'); setRetry(value => value + 1) }} />}
     {selected && <RatingDialog item={selected} user={user} people={options.people} onClose={() => setSelected(null)} onSaved={saved} />}
   </>
 }

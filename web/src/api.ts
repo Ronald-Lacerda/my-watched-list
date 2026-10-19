@@ -5,9 +5,11 @@ export interface RatingSummary { ratings: Rating[]; average: number | null; rati
 export interface WatchItem extends RatingSummary {
   id: string; person_id: string; person: string; service: string; title: string; source_title: string
   media_type: string; watched_on: string; watched_at: string | null; poster_path: string | null
+  poster_url: string; metadata_provider: string; overview_language: string
   year: number | null; overview: string; genres: string[]; rating_key: string | null
   people: Person[]; watch_count: number
 }
+export interface MetadataCandidate { id: number; media_type: 'movie' | 'tv'; title: string; year: number | null; poster_path: string | null; overview: string }
 export interface HistoryResult { items: WatchItem[]; total: number; next_cursor: string | null }
 export interface FilterOptions { people: Person[]; services: string[] }
 export interface Connection { id: string; person_id: string; person: string; service: string; profile: string; status: string; last_sync: string | null }
