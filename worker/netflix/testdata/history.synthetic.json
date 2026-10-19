@@ -1,0 +1,6 @@
+{
+  "viewedItems": [
+    {"movieID": 101, "title": "Filme sintético", "date": 1725233400000, "videoType": "movie"},
+    {"movieID": "202", "title": "Série sintética: Episódio 1", "date": 1725235200000, "series": 200, "seriesTitle": "Série sintética", "seasonNumber": 0, "episodeNumber": 1}
+  ]
+}

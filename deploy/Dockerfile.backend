@@ -7,7 +7,8 @@ COPY internal ./internal
 COPY worker ./worker
 RUN CGO_ENABLED=0 go build -trimpath -o /out/api ./api/cmd/api \
     && CGO_ENABLED=0 go build -trimpath -o /out/migrate ./api/cmd/migrate \
-    && CGO_ENABLED=0 go build -trimpath -o /out/worker ./worker/cmd/worker
+    && CGO_ENABLED=0 go build -trimpath -o /out/worker ./worker/cmd/worker \
+    && CGO_ENABLED=0 go build -trimpath -o /out/playwright github.com/mxschmitt/playwright-go/cmd/playwright
 
 FROM alpine:3.23 AS runtime
 RUN apk add --no-cache ca-certificates tzdata \
@@ -16,3 +17,16 @@ WORKDIR /app
 COPY --from=build /out/ /app/
 USER app
 CMD ["/app/api"]
+
+# A versão deve coincidir com playwrightCliVersion do módulo playwright-go.
+FROM mcr.microsoft.com/playwright:v1.62.1-noble AS worker
+ENV PLAYWRIGHT_DRIVER_PATH=/opt/playwright-go
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV HOME=/home/pwuser
+WORKDIR /app
+COPY --from=build /out/worker /app/worker
+COPY --from=build /out/playwright /app/playwright
+RUN /app/playwright install --only-shell chromium \
+    && chmod -R a+rX /opt/playwright-go
+USER pwuser
+CMD ["/app/worker"]

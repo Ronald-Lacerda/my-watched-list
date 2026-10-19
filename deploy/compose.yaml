@@ -5,6 +5,7 @@ x-go: &go
   build:
     context: ..
     dockerfile: deploy/Dockerfile.backend
+    target: runtime
 
 x-app-env: &app-env
   DATABASE_URL: "postgres://${POSTGRES_USER:-watched}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/${POSTGRES_DB:-watched}?sslmode=disable"
@@ -52,9 +53,19 @@ services:
     init: true
 
   worker:
-    <<: *go
+    image: my-watched-list-worker:local
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.backend
+      target: worker
     command: [/app/worker]
-    environment: *app-env
+    environment:
+      <<: *app-env
+      SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY:?defina SESSION_ENCRYPTION_KEY em base64 no .env}
+      TMDB_READ_ACCESS_TOKEN: ${TMDB_READ_ACCESS_TOKEN:-}
+      SYNC_CRON: ${SYNC_CRON:-0 4 * * *}
+      SYNC_TIMEZONE: ${SYNC_TIMEZONE:-America/Sao_Paulo}
+    shm_size: 1gb
     depends_on:
       migrate:
         condition: service_completed_successfully
