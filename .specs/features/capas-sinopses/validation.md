@@ -4,9 +4,12 @@
 
 Os nove critérios estão atendidos. As duas falhas da primeira revisão foram corrigidas em `dfec221` e suas regressões passaram na revalidação independente. Nenhum gap permanece aberto.
 
-**Data**: 2026-10-18  
-**Spec**: `.specs/features/capas-sinopses/spec.md`  
-**Diff range**: `b51387f86d2cd45cdbd0a010a126b7d0513b5c69..dfec221`  
+**Data**: 2026-10-18
+
+**Spec**: `.specs/features/capas-sinopses/spec.md`
+
+**Diff range**: `b51387f86d2cd45cdbd0a010a126b7d0513b5c69..dfec221`
+
 **Verificador**: subagente independente, autor diferente do verificador. Primeira iteração de correção/revalidação de três permitidas.
 
 ## Tarefas e escopo
