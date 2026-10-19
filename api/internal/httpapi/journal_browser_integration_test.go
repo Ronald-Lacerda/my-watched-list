@@ -62,8 +62,8 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 	b := browserFixture(t, true)
 	p := b.page
 	loginBrowser(t, b, 0)
-	records(t, p, 6)
-	visible(t, p.GetByText("6 registros", pw.PageGetByTextOptions{Exact: pw.Bool(true)}))
+	records(t, p, 5)
+	visible(t, p.GetByText("5 itens", pw.PageGetByTextOptions{Exact: pw.Bool(true)}))
 	choose(t, p, "Pessoa", b.f.users[0].ID)
 	choose(t, p, "Streaming", "netflix")
 	fill(t, p, "Data inicial", "2026-10-17")
@@ -72,12 +72,12 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 	visible(t, eventCard(p, b.ids[0]))
 	visible(t, eventCard(p, b.ids[2]))
 	click(t, p, "Limpar filtros")
-	records(t, p, 6)
+	records(t, p, 5)
 	fill(t, p, "Data inicial", "2027-01-01")
 	records(t, p, 0)
 	visible(t, p.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Nenhuma história neste recorte."}))
 	click(t, p, "Limpar filtros")
-	records(t, p, 6)
+	records(t, p, 5)
 	screenshot(t, p, "fase2-history.png")
 	openRating(t, p, b.ids[0])
 	screenshot(t, p, "fase2-rating.png")
@@ -94,7 +94,7 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 	if _, err = p.Reload(); err != nil {
 		t.Fatal(err)
 	}
-	records(t, p, 6)
+	records(t, p, 5)
 	visible(t, eventCard(p, b.ids[0]).GetByRole("button", pw.LocatorGetByRoleOptions{Name: "Editar nota de Filme A"}))
 	if text, _ := eventCard(p, b.ids[1]).TextContent(); !strings.Contains(text, "Sua nota: 0") {
 		t.Fatal("nota zero não se propagou à obra compartilhada", text)
@@ -107,7 +107,7 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 	click(t, p, "Sair da conta")
 	visible(t, p.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Bem-vindo de volta."}))
 	loginBrowser(t, b, 1)
-	records(t, p, 6)
+	records(t, p, 5)
 	openRating(t, p, b.ids[1])
 	visible(t, p.GetByText("<script>window.executed=true</script>", pw.PageGetByTextOptions{Exact: pw.Bool(true)}))
 	if v, _ := p.Evaluate(`()=>window.executed===true`); v == true {
@@ -160,7 +160,7 @@ func TestBrowserJournalAndIndividualRatings(t *testing.T) {
 		t.Fatal("sessão vazou na interface")
 	}
 	click(t, p, "Histórico")
-	records(t, p, 6)
+	records(t, p, 5)
 	if err = p.SetViewportSize(390, 844); err != nil {
 		t.Fatal(err)
 	}
@@ -181,8 +181,8 @@ func TestBrowserPaginationAndRecovery(t *testing.T) {
 	loginBrowser(t, b, 0)
 	records(t, p, 50)
 	click(t, p, "Carregar mais")
-	records(t, p, 61)
-	if value, err := p.Evaluate(`()=>new Set([...document.querySelectorAll('.watch-card')].map(e=>e.dataset.eventId)).size`); err != nil || value != 61 {
+	records(t, p, 60)
+	if value, err := p.Evaluate(`()=>new Set([...document.querySelectorAll('.watch-card')].map(e=>e.dataset.eventId)).size`); err != nil || value != 60 {
 		t.Fatal("paginação duplicou/perdeu eventos", value, err)
 	}
 	choose(t, p, "Streaming", "prime_video")
@@ -201,7 +201,7 @@ func TestBrowserPaginationAndRecovery(t *testing.T) {
 	click(t, p, "Tentar novamente")
 	records(t, p, 50)
 	click(t, p, "Carregar mais")
-	records(t, p, 61)
+	records(t, p, 60)
 	openRating(t, p, b.ids[0])
 	fill(t, p, "Sua nota", "7.5")
 	if err = p.Locator("textarea").Fill("Preservado durante falha"); err != nil {

@@ -21,7 +21,7 @@ Where: web e testes Chromium
 Depends on: T1
 Tests: Chromium de série única, filtros, nota zero/edição/remoção/pendentes, regressões existentes adaptadas ao novo contrato do app
 Gate: Build
-- [ ] Solicitar group_series, apresentar participantes/última assistida/quantidade e explicar nota da série; atualizar expectativas de contagem afetadas sem enfraquecer regressões. SAG-02, AC4–5.
+- [x] Solicitar group_series, apresentar participantes/última assistida/quantidade e explicar nota da série; atualizar expectativas de contagem afetadas sem enfraquecer regressões. SAG-02, AC4–5. TestBrowserGroupedSeriesAndRatings falhou antes da mudança por exibir os dois episódios; passou após implementar. Build web e Full/Quick/vet/build Go passaram. Regressões passam com 5 itens em vez de 6 e 60 em vez de 61, pois Série A agora ocupa uma entrada. Asserções de notas, privacidade, filtros e foco preservadas; captura de 320 px inspecionada.
 
 ### T3: documentar e atualizar app local
 Where: docs/app.md, .specs/STATE.md e operação local

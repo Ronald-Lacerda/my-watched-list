@@ -13,7 +13,7 @@ func TestBrowserSessionLocalFonts(t *testing.T) {
 	b := browserFixture(t, true)
 	p := b.page
 	loginBrowser(t, b, 0)
-	records(t, p, 6)
+	records(t, p, 5)
 	waitJS(t, p, `()=>!!navigator.serviceWorker.controller`)
 	value, err := p.Evaluate(`async()=>{
 		await document.fonts.load('400 16px "DM Sans"');

@@ -15,7 +15,7 @@ func TestBrowserPWAOfflinePrivacy(t *testing.T) {
 	b := browserFixture(t, true)
 	p := b.page
 	loginBrowser(t, b, 0)
-	records(t, p, 6)
+	records(t, p, 5)
 	waitJS(t, p, `()=>!!navigator.serviceWorker.controller`)
 	value, err := p.Evaluate(`async()=>{const manifest=await(await fetch('/manifest.webmanifest')).json();const icons=await Promise.all(manifest.icons.map(icon=>new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve([img.width,img.height]);img.onerror=reject;img.src=icon.src})));return JSON.stringify({manifest,icons})}`)
 	if err != nil {
@@ -92,7 +92,7 @@ func TestBrowserPWAOfflinePrivacy(t *testing.T) {
 		t.Fatal(err)
 	}
 	click(t, p, "Tentar novamente")
-	records(t, p, 6)
+	records(t, p, 5)
 	click(t, p, "Sair da conta")
 	visible(t, p.GetByRole("heading", pw.PageGetByRoleOptions{Name: "Bem-vindo de volta."}))
 }

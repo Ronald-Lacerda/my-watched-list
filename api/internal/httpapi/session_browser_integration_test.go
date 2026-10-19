@@ -39,7 +39,7 @@ func TestBrowserSessionHighlightAndFilters(t *testing.T) {
 		t.Fatal("preparação da nota individual", w.Code, w.Body.String())
 	}
 	loginBrowser(t, b, 0)
-	records(t, p, 6)
+	records(t, p, 5)
 	featured := highlightedEvent(t, p, first)
 	if text, err := featured.Locator(".couple-score span").TextContent(); err != nil || text != "Média · 1/2" {
 		t.Fatal("contador não corresponde à única avaliação disponível", text, err)
@@ -49,7 +49,7 @@ func TestBrowserSessionHighlightAndFilters(t *testing.T) {
 			t.Fatal("destaque perdeu informação do evento", expected, text)
 		}
 	}
-	for _, id := range b.ids {
+	for _, id := range []string{b.ids[0], b.ids[1], b.ids[2], b.ids[4], b.ids[5]} {
 		if count, err := eventCard(p, id).Count(); err != nil || count != 1 {
 			t.Fatal("evento duplicado ou reunido a outro perfil", id, count, err)
 		}
@@ -89,7 +89,7 @@ func TestBrowserSessionHighlightAndFilters(t *testing.T) {
 		t.Fatal("destaque de seleção anterior permaneceu na seleção vazia")
 	}
 	click(t, p, "Limpar filtros")
-	records(t, p, 6)
+	records(t, p, 5)
 	choose(t, p, "Pessoa", b.f.users[1].ID)
 	choose(t, p, "Streaming", "netflix")
 	fill(t, p, "Data inicial", "2026-10-15")
@@ -123,9 +123,9 @@ func TestBrowserSessionHighlightPagination(t *testing.T) {
 	records(t, p, 50)
 	highlightedEvent(t, p, first)
 	click(t, p, "Carregar mais")
-	records(t, p, 61)
+	records(t, p, 60)
 	highlightedEvent(t, p, first)
-	if value, err := p.Evaluate(`()=>new Set([...document.querySelectorAll('.watch-card')].map(e=>e.dataset.eventId)).size`); err != nil || value != 61 {
+	if value, err := p.Evaluate(`()=>new Set([...document.querySelectorAll('.watch-card')].map(e=>e.dataset.eventId)).size`); err != nil || value != 60 {
 		t.Fatal("destaque/paginação duplicou ou perdeu eventos", value, err)
 	}
 }
@@ -163,7 +163,7 @@ func TestBrowserSessionPosterFallbackAndKeyboard(t *testing.T) {
 		t.Fatal(err)
 	}
 	loginBrowser(t, b, 0)
-	records(t, p, 6)
+	records(t, p, 5)
 	first := b.ids[0]
 	if b.ids[1] > first {
 		first = b.ids[1]

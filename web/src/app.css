@@ -38,7 +38,8 @@
 .watch-info{min-width:0}
 .watch-type{display:flex;align-items:center;flex-wrap:wrap;gap:7px;font-size:11px;font-weight:400;color:var(--muted);margin-bottom:5px}
 .watch-info h3{font-weight:500;font-size:22px;line-height:1.2;letter-spacing:-.45px;margin-bottom:7px;overflow-wrap:anywhere}
-.episode-title{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:9px}
+.series-summary{font-size:12px;color:var(--muted);overflow-wrap:anywhere;margin-bottom:9px}
+.rating-scope{font-size:13px;color:var(--accent);line-height:1.6;margin-bottom:16px}
 .watch-meta{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:9px}
 .watch-date{font-size:12px;color:var(--muted)}
 .watch-person{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
@@ -67,7 +68,7 @@
 .featured-watch .watch-type{font-size:12px;margin-bottom:12px}
 .featured-watch .watch-info h3{font-family:var(--display);font-size:clamp(58px,6.2vw,82px);font-weight:500;line-height:1;letter-spacing:.5px;margin-bottom:15px}
 .featured-watch .watch-info h3.long-watch-title{font-size:clamp(44px,4.8vw,64px);line-height:1.04}
-.featured-watch .episode-title{font-size:13px;margin-bottom:12px;max-width:56ch}
+.featured-watch .series-summary{font-size:13px;margin-bottom:12px;max-width:56ch}
 .featured-watch .watch-meta{gap:9px 12px;margin-top:14px}
 .featured-watch .watch-rating{position:relative;width:66%;padding:20px 32px 30px;border:0;align-items:flex-start;gap:20px}
 .featured-scores{display:flex;align-items:stretch;gap:0;max-width:100%}
@@ -174,7 +175,7 @@ body.modal-open{overflow:hidden}
   .feed-heading{gap:12px;align-items:baseline}.feed-heading h2{font-size:12px}.feed-heading>span{font-size:11px}
   .day-heading{gap:9px;margin-bottom:12px}.day-heading h2{font-size:11px}.day-group{margin-bottom:25px}
   .watch-card{grid-template-columns:66px minmax(0,1fr);gap:14px;padding:16px;border-radius:9px}.poster{width:66px;height:99px}.poster-letter{font-size:42px}.poster-caption{font-size:6px;bottom:8px}
-  .watch-info h3{font-size:21px;margin-bottom:6px}.watch-type{font-size:10px}.watch-meta{gap:8px;margin-top:7px}.watch-person{font-size:11px}.service-pill{font-size:10px}.tiny-avatar{width:22px;height:22px;font-size:9px}.individual-scores{font-size:11px;gap:12px;margin-top:10px}.episode-title{font-size:11px;margin-bottom:7px}
+  .watch-info h3{font-size:21px;margin-bottom:6px}.watch-type{font-size:10px}.watch-meta{gap:8px;margin-top:7px}.watch-person{font-size:11px}.service-pill{font-size:10px}.tiny-avatar{width:22px;height:22px;font-size:9px}.individual-scores{font-size:11px;gap:12px;margin-top:10px}.series-summary{font-size:11px;margin-bottom:7px}
   .watch-rating{grid-column:1/-1;flex-direction:row;justify-content:space-between;border-left:0;border-top:1px solid var(--line);padding:12px 0 0;margin-top:1px;gap:12px}.couple-score>strong{font-size:22px}.couple-score>span{font-size:10px}.rating-button{width:auto;min-width:118px;font-size:11px;padding:9px}
   .feed-footer{padding-top:2px;gap:12px;font-size:11px;flex-wrap:wrap}.feed-footer .button{font-size:12px}.empty-state{padding:39px 19px}.empty-state h3{font-size:23px}.empty-state p{font-size:13px}
   .rating-dialog{width:calc(100vw - 24px);max-height:calc(100dvh - 24px);border-radius:10px}.dialog-content{padding:25px 18px 20px}.dialog-caption{margin-bottom:19px}.dialog-heading{grid-template-columns:59px minmax(0,1fr);gap:15px;margin-bottom:18px}.dialog-heading .poster{width:59px;height:89px}.dialog-heading h2{font-size:34px}.dialog-heading .media-label{font-size:10px}.dialog-heading .muted{font-size:12px}.dialog-overview{font-size:12px}
