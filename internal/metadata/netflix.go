@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"html"
@@ -26,7 +27,19 @@ type NetflixClient struct {
 }
 
 func NewNetflix() *NetflixClient {
-	return &NetflixClient{baseURL: "https://www.netflix.com", http: &http.Client{Timeout: 20 * time.Second}}
+	// O endpoint público pode negociar h2 e deixar a leitura expirar. Um
+	// transporte próprio mantém a consulta em HTTP/1.1 sem mudar os demais
+	// clientes ou desabilitar a validação TLS. Clone também pode herdar ALPN
+	// h2 do transporte padrão; restringir apenas Protocols não é suficiente.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	transport.Protocols = protocols
+	if transport.TLSClientConfig == nil {
+		transport.TLSClientConfig = &tls.Config{}
+	}
+	transport.TLSClientConfig.NextProtos = []string{"http/1.1"}
+	return &NetflixClient{baseURL: "https://www.netflix.com", http: &http.Client{Timeout: 20 * time.Second, Transport: transport}}
 }
 
 const netflixBodyLimit = 4 << 20

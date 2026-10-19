@@ -2,6 +2,8 @@ package metadata
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,6 +15,41 @@ import (
 	"testing"
 	"time"
 )
+
+func TestNetflixTransportNegotiatesHTTP1WithHTTP2Server(t *testing.T) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor != 1 || r.TLS == nil || r.TLS.NegotiatedProtocol != "http/1.1" {
+			t.Errorf("protocolo incorreto: %s", r.Proto)
+		}
+		fmt.Fprint(w, "ok")
+	}))
+	srv.EnableHTTP2 = true
+	srv.TLS = &tls.Config{NextProtos: []string{"h2", "http/1.1"}}
+	srv.StartTLS()
+	defer srv.Close()
+	c := NewNetflix()
+	transport, ok := c.http.Transport.(*http.Transport)
+	if !ok || transport == http.DefaultTransport || transport.Proxy == nil || c.http.Timeout != 20*time.Second || c.http.Jar != nil || transport.TLSClientConfig.InsecureSkipVerify {
+		t.Fatal("transporte próprio perdeu proxy, timeout ou validação TLS")
+	}
+	// Confia somente no certificado sintético deste servidor, mantendo a
+	// validação real. O servidor oferece h2, para detectar regressão no ALPN.
+	pool := x509.NewCertPool()
+	pool.AddCert(srv.Certificate())
+	transport.TLSClientConfig.RootCAs = pool
+	defer transport.CloseIdleConnections()
+	resp, err := c.http.Get(srv.URL)
+	if err != nil {
+		t.Fatalf("servidor TLS não recebeu HTTP/1.1: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || resp.ProtoMajor != 1 || resp.TLS.NegotiatedProtocol != "http/1.1" {
+		t.Fatalf("resposta não negociou HTTP/1.1: %s, %s", resp.Proto, resp.TLS.NegotiatedProtocol)
+	}
+	if standard := http.DefaultTransport.(*http.Transport); standard.TLSClientConfig != nil && standard.TLSClientConfig.RootCAs == pool {
+		t.Fatal("configuração TLS vazou para o transporte global")
+	}
+}
 
 // Estrutura mínima do nmTitleGQL público, sem identificadores anônimos/sessão
 // ou HTML real capturado. Título, sinopse e URL são dados sintéticos.
