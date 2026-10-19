@@ -61,8 +61,10 @@ Gate: Full
 | T1 / AC1 | browser_integration_test.go:113 login/ativação/logout; journal_browser_integration_test.go:61 notas e conexões | Mesmos contratos e valores anteriores |
 | T1 / AC8 | session_pwa_integration_test.go:37 tema/meta/scheme, :48 fonte exata no cache, :83 fontes carregadas após reload offline | Shell local e tema coerentes |
 | T1 / privacidade | pwa_browser_integration_test.go:67 rejeita paths fora da allowlist; :87 exige zero notas após tentativa offline | Asserções preservadas, só dois assets públicos acrescentados |
-| T2 / AC2–3 | session_browser_integration_test.go:20/:23 exige um destaque com ID esperado; :51 exige cada ID uma vez; :66 não aceita destaque em vazio; :77 exige URL; :106 exige 61 IDs distintos | Sem evento sintético, duplicado ou destaque obsoleto |
-| T2 / AC5 | :56 aguarda média 5 após 0 e 10; :58 exige Sua nota: 0 e nota 10 da Gabriela; regressão antiga continua editando/removendo notas | Zero e separação das avaliações preservados |
-| T2 / AC4/7 | :150 exige fallback sem img quebrada; :159 alvo ≥44; :169 foco após Escape; :183 imagem válida com espaço e prioridade | 1280/390/320 sem rolagem horizontal |
+| T2 / AC2–3 | session_browser_integration_test.go:20/:23 exige um destaque com ID esperado; :53 exige cada ID uma vez; :88 não aceita destaque em vazio; :99 exige URL; :128 exige 61 IDs distintos | Sem evento sintético, duplicado ou destaque obsoleto |
+| T2/T4 / AC5 | :44 exige contador 1/2 antes; :60–80 exige média 5, contador 2/2, R=0 e Gabriela=10 nos dois eventos; regressão antiga continua editando/removendo notas | Zero, contador e separação das avaliações preservados |
+| T2 / AC4/7 | :173 exige fallback sem img quebrada; :180 alvo ≥44; :190 foco após Escape; :204 imagem válida com espaço e prioridade | 1280/390/320 sem rolagem horizontal |
 
 Os testes novos de T1 mapeiam exclusivamente AC8. As verificações cosméticas são inspeções, sem testes que espelham regras CSS.
+
+Revisão independente final PASS em d56622c: 9/9 critérios, seis mutantes contratuais mortos após reforço de T4, nenhum gap pendente. Evidências e limites em validation.md. CI remoto permanece requisito para marcar o PR pronto.
