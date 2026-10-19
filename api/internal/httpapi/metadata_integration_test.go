@@ -19,6 +19,27 @@ type metadataStub struct {
 	ids     []string
 }
 
+func TestNetflixKnownSeriesHTTP(t *testing.T) {
+	f, ids := historyFixture(t)
+	stub := &metadataStub{}
+	withMetadata(t, &f, stub)
+	if _, err := f.pool.Exec(context.Background(), `UPDATE watch_events SET media_type_hint='' WHERE id=$1`, ids[0]); err != nil {
+		t.Fatal(err)
+	}
+	path := "/api/events/" + ids[0] + "/metadata"
+	if w := f.call("PUT", path, `{"provider":"netflix"}`, 0, f.origin); w.Code != 200 {
+		t.Fatal("identificação Netflix falhou", w.Code, w.Body.String())
+	}
+	if w := f.call("PUT", path, `{"provider":"tmdb","tmdb_id":123,"media_type":"movie"}`, 0, f.origin); w.Code != 400 || !strings.Contains(w.Body.String(), "incompatible_type") {
+		t.Fatal("série confirmada aceitou filme", w.Code, w.Body.String())
+	}
+	var provider, kind string
+	var title *string
+	if err := f.pool.QueryRow(context.Background(), `SELECT provider,media_type,title_id::text FROM metadata_overrides WHERE source_key='netflix:work:101'`).Scan(&provider, &kind, &title); err != nil || provider != "netflix" || kind != "tv" || title != nil {
+		t.Fatal("rejeição alterou identificação", provider, kind, title, err)
+	}
+}
+
 func (s *metadataStub) Search(_ context.Context, q, kind string) ([]metadata.Candidate, error) {
 	s.queries = append(s.queries, q+":"+kind)
 	if s.fail {

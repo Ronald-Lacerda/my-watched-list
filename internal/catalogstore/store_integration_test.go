@@ -117,6 +117,11 @@ func TestDurableIdentification(t *testing.T) {
 	if err = pool.QueryRow(ctx, `SELECT provider||':'||overview||':'||poster_url FROM metadata_overrides WHERE source_key='netflix:work:20' AND title_id IS NULL`).Scan(&got); err != nil || got != "netflix:Sinopse Netflix:https://occ-0.nflxso.net/art.jpg" {
 		t.Fatal("complemento perdido", got, err)
 	}
+	// A classificação confirmada continua conhecida mesmo sem pista na coleta.
+	exec(`UPDATE watch_events SET media_type_hint='' WHERE id=$1`, other)
+	if err = catalogstore.ConfirmTMDB(ctx, pool, other, actor, metadata.Title{TMDBID: 123, MediaType: "movie", Name: "Filme incompatível"}); !errors.Is(err, catalogstore.ErrType) {
+		t.Fatal("série Netflix conhecida aceitou filme", err)
+	}
 	nf.PosterURL = "https://evil.invalid/art.jpg"
 	if err = catalogstore.ConfirmNetflix(ctx, pool, other, actor, nf); !errors.Is(err, catalogstore.ErrType) {
 		t.Fatal("CDN inválida aceita", err)

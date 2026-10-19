@@ -138,11 +138,16 @@ func (c *Client) Match(ctx context.Context, e MatchInput) (Title, error) {
 			}
 		}
 	}
-	if len(matches) == 0 {
+	// Um nome canônico não elimina um alias oficial de outra obra. Verificar
+	// os demais candidatos antes de aceitar a associação única.
+	if len(matches) <= 1 {
 		if len(candidates) > 20 {
 			return Title{}, ErrAmbiguous
 		}
 		for key, item := range candidates {
+			if _, matched := matches[key]; matched {
+				continue
+			}
 			var aliases struct {
 				ID     int64 `json:"id"`
 				Titles []struct {

@@ -80,6 +80,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: M5 (web/historico)
 - last seen: 2026-10-19T00:39:36Z
 
+### L-012 - Verifique a unicidade entre nomes canônicos e aliases de todos os candidatos antes de associar uma obra automaticamente.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `metadados` · harmful: 0
+- features: capas-sinopses
+- evidence: AC1 (metadados)
+- last seen: 2026-10-19T02:05:30Z
+
+### L-013 - Inclua o tipo da identificação persistida ao validar mudanças de metadados, mesmo quando a coleta não contém uma pista de tipo.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `catalogo` · harmful: 0
+- features: capas-sinopses
+- evidence: AC3 (catalogo)
+- last seen: 2026-10-19T02:05:31Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

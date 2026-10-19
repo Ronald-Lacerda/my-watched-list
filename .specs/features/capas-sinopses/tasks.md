@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-  T1 --> T2 --> T3 --> T4 --> T5
+  T1 --> T2 --> T3 --> T4 --> T5 --> T6
 ```
 
 ## Task Breakdown
@@ -44,6 +44,13 @@ Tests: backup/restore isolado, migration/Compose/smoke, evidência de Naruto e p
 Gate: Build
 - [x] Documentar, fazer backup validado, implantar e reprocessar metadados; completar associações comprovadas e relatar limitações. CMS-04, AC8–9. Revisão independente após último commit, PR separado e CI verde.
 
+### T6: corrigir ambiguidades e tipo conhecido após revisão
+Where: cliente TMDB, identidade compartilhada e testes
+Depends on: T5
+Tests: regressões de canônico versus alias, cap20 com canônico e série conhecida por override Netflix na API e no banco
+Gate: Build
+- [x] Corrigir os dois gaps P1 provados pela revisão independente, sem mudar asserções anteriores; revalidar e atualizar API/worker locais. AC1/3.
+
 ## Test Coverage Matrix
 
 T1: Full passou em banco sintético e Chromium, sem exclusão de casos anteriores. Evidência e mapeamento direto/reverso: AC1 → aliases_test.go:82/86/90/93 (alias único, ambiguidade, aproximação e truncamento); AC2 → aliases_test.go:123/127/159 (campos, idioma e falhas), netflix_test.go:54/73/112/128/173/196 (identidade, fallback GB, página genérica, CDN, erros e entrada/cancelamento sem HTTP). Todos pertencem a CMS-01; asserções conferem dados retornados além das chamadas. Os testes antigos foram movidos junto do cliente, mantendo seus resultados esperados.
@@ -57,6 +64,8 @@ T3: Full passou. AC3 → api/internal/httpapi/metadata_integration_test.go:61/66
 T4: Build web e Full/Quick/vet/build Go passaram. AC6 e mapeamento reverso → metadata_browser_integration_test.go: foco inicial, erro mantendo consulta, busca sem confirmar automaticamente, seleção explícita, sinopse/capa/fonte visíveis, nota zero e parceira dez, celular sem overflow, Escape/foco e fallback Netflix. O teste verifica também ausência de API/imagens em CacheStorage. Regressões anteriores preservam resultados e somente especificam .rating-button onde o card agora tem duas ações. Screenshot sintético inspecionado em 390px.
 
 T5: backup de 166.016 bytes restaurado em banco temporário e comparado (contas/credenciais, sessões do app e Netflix, eventos, títulos e notas); banco temporário removido após a conferência, dump local ignorado preservado. Migration 5, imagens Compose e API/web/worker atualizados; API ready e assets conferidos. Sem mudança de senhas, volumes ou chave. 1.248 eventos preservados, 1.248 com capa/sinopse, sendo 1.246 TMDB e dois Netflix; 192 URLs de imagens HTTP 200, 193 itens na lista. Naruto validado por Match real → TMDB 20982 com imagem/sinopse; quatro nomes truncados confirmados por página oficial completa, sem habilitar associação por prefixo. Build web/Compose e Full/Quick/vet/build passaram no código final; testes continuam sintéticos. Evidência operacional privada fica em .local, sem payloads pessoais no repositório. Revisão independente e CI são os gates de fechamento após este commit.
+
+T6: os testes novos reproduziram os dois gaps antes da correção. AC1 → internal/metadata/ambiguity_test.go:80/84/88 confere dados do caso único, falha remota, canônico versus alias, mídias diferentes, duas correspondências e cap21 com canônico sem buscar detalhes. AC3 → internal/catalogstore/store_integration_test.go:123 exige ErrType para série identificada apenas pela Netflix; api/internal/httpapi/metadata_integration_test.go:34/39 exige HTTP400 e associação anterior intacta. Todos pertencem aos gaps provados, sem ampliar escopo ou reduzir testes anteriores. Full/Quick/vet/build, build web e Compose passaram; API/worker locais atualizados com prontidão e preservação de dados conferidas. Lições ac_gap registradas pelo script oficial. Solicitar revalidação focada antes do fechamento.
 
 | Camada | Cobertura |
 | --- | --- |

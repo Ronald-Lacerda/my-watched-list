@@ -23,7 +23,7 @@ const SourceKey = `CASE WHEN e.source_work_id<>'' THEN a.service||':work:'||e.so
 
 func ReadIdentity(ctx context.Context, q Querier, id string) (Identity, error) {
 	var i Identity
-	err := q.QueryRow(ctx, `SELECT coalesce(`+SourceKey+`,''),a.service,coalesce(nullif(e.source_work_id,''),e.source_title_id,''),CASE WHEN e.media_type_hint='tv' OR t.media_type='tv' THEN 'tv' ELSE coalesce(nullif(e.media_type_hint,''),t.media_type,'') END FROM watch_events e JOIN streaming_accounts a ON a.id=e.streaming_account_id LEFT JOIN titles t ON t.id=e.title_id WHERE e.id=$1`, id).Scan(&i.Key, &i.Service, &i.SourceID, &i.MediaType)
+	err := q.QueryRow(ctx, `SELECT coalesce(`+SourceKey+`,''),a.service,coalesce(nullif(e.source_work_id,''),e.source_title_id,''),CASE WHEN e.media_type_hint='tv' OR t.media_type='tv' OR o.media_type='tv' THEN 'tv' ELSE coalesce(nullif(e.media_type_hint,''),o.media_type,t.media_type,'') END FROM watch_events e JOIN streaming_accounts a ON a.id=e.streaming_account_id LEFT JOIN titles t ON t.id=e.title_id LEFT JOIN metadata_overrides o ON o.source_key=(`+SourceKey+`) WHERE e.id=$1`, id).Scan(&i.Key, &i.Service, &i.SourceID, &i.MediaType)
 	return i, err
 }
 
