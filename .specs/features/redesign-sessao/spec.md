@@ -54,6 +54,6 @@ Mudanças de banco, autenticação, coleta, ranking anual, novos streamings, edi
 
 | ID | Critérios | Estado |
 | --- | --- | --- |
-| RDS-01 | 1, 7 | pending |
-| RDS-02 | 2–6 | pending |
+| RDS-01 | 1, 7 | implemented |
+| RDS-02 | 2–6 | implemented |
 | RDS-03 | 8–9 | pending |

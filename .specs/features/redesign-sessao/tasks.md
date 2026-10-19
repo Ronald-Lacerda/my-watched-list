@@ -21,7 +21,7 @@ Where: web/src
 Depends on: T1
 Tests: Chromium integration, existing history/ratings regression
 Gate: Build
-- [ ] Renderizar o primeiro evento uma vez como destaque e outros por dia, com pessoa/serviço/notas reais, filtros originais, paginação e arte local quando faltar pôster. Arquivos: web/src/Journal.tsx, Poster.tsx, app.css e api/internal/httpapi/session_browser_integration_test.go. AC2–7. Testes novos derivam dos critérios: destaque segue consulta, IDs únicos ao paginar, salvar zero, fallback de imagem, metadados e teclado/320 px. Executar suítes completas sem enfraquecer testes anteriores.
+- [x] Renderizar o primeiro evento uma vez como destaque e outros por dia, com pessoa/serviço/notas reais, filtros originais, paginação e arte local quando faltar pôster. Arquivos: web/src/Journal.tsx, Poster.tsx, app.css, style.css (ocultação visual do link de salto) e api/internal/httpapi/session_browser_integration_test.go. AC2–7. TestBrowserSessionHighlightAndFilters falhou antes da implementação por não encontrar destaque, depois passou. Os três testes novos verificam evento exato, filtros/URL, zero/média, paginação, imagem falha/válida e teclado/320 px. Build web, Full/Quick/vet/build Go passaram após ajustes de títulos longos e dias com um registro. Capturas do build real foram inspecionadas com dados sintéticos, com e sem pôster, no desktop/celular e no diálogo. Nenhum teste antigo removido ou enfraquecido.
 
 ### T3: operação local e documentação do redesign
 Where: docs
@@ -53,5 +53,8 @@ Gate: Build
 | T1 / AC1 | browser_integration_test.go:113 login/ativação/logout; journal_browser_integration_test.go:61 notas e conexões | Mesmos contratos e valores anteriores |
 | T1 / AC8 | session_pwa_integration_test.go:37 tema/meta/scheme, :48 fonte exata no cache, :83 fontes carregadas após reload offline | Shell local e tema coerentes |
 | T1 / privacidade | pwa_browser_integration_test.go:67 rejeita paths fora da allowlist; :87 exige zero notas após tentativa offline | Asserções preservadas, só dois assets públicos acrescentados |
+| T2 / AC2–3 | session_browser_integration_test.go:20/:23 exige um destaque com ID esperado; :51 exige cada ID uma vez; :66 não aceita destaque em vazio; :77 exige URL; :106 exige 61 IDs distintos | Sem evento sintético, duplicado ou destaque obsoleto |
+| T2 / AC5 | :56 aguarda média 5 após 0 e 10; :58 exige Sua nota: 0 e nota 10 da Gabriela; regressão antiga continua editando/removendo notas | Zero e separação das avaliações preservados |
+| T2 / AC4/7 | :150 exige fallback sem img quebrada; :159 alvo ≥44; :169 foco após Escape; :183 imagem válida com espaço e prioridade | 1280/390/320 sem rolagem horizontal |
 
 Os testes novos de T1 mapeiam exclusivamente AC8. As verificações cosméticas são inspeções, sem testes que espelham regras CSS.

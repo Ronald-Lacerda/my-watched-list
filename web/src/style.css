@@ -42,8 +42,8 @@ button svg{vertical-align:middle}
 .startup p{max-width:460px;text-align:center}
 
 .app-layout{min-height:100svh}
-.skip-link{position:fixed;top:10px;left:18px;z-index:1100;transform:translateY(calc(-100% - 16px));background:var(--accent);color:var(--on-accent);border-radius:7px;padding:11px 16px;min-height:44px;text-decoration:none;font-weight:500}
-.skip-link:focus{transform:none}
+.skip-link{position:fixed;top:10px;left:18px;z-index:1100;clip-path:inset(50%);opacity:0;pointer-events:none;background:var(--accent);color:var(--on-accent);border-radius:7px;padding:11px 16px;min-height:44px;text-decoration:none;font-weight:500}
+.skip-link:focus{clip-path:none;opacity:1;pointer-events:auto}
 #conteudo{scroll-margin-top:24px}
 .app-header{border-bottom:1px solid var(--line)}
 .topbar{display:flex;align-items:center;gap:34px;max-width:1280px;margin-inline:auto;padding:18px 40px;min-width:0}
